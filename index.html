@@ -28,6 +28,10 @@
   <div class="signature">
     <a href="https://x.com/blacklolipop216" target="_blank" rel="noopener noreferrer">@kuroame</a>
   </div>
+  <div class="disclaimer">
+    ※ 個人による非公式の集計です。情報は調査時点のものです。<br>
+    最新情報は各劇場の公式サイトをご確認ください。
+  </div>
 </div>
 
 <div class="schedule-root">
@@ -52,6 +56,8 @@
 <div id="chart-wrap">
   <div id="chart"></div>
 </div>
+
+<div id="text-output" style="display: none;"></div>
 
 
 <div id="tip" style="position: absolute; display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; pointer-events: none; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 240px;"></div>
@@ -120,11 +126,16 @@
 .signature { margin: 6px 0 0; font-size: 11px; text-align: left; color: var(--color-text-tertiary); }
 .signature a { color: inherit; text-decoration: none; }
 .signature a:hover { text-decoration: underline; }
+.disclaimer { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--color-text-tertiary); }
 .schedule-root { width: 100%; box-sizing: border-box; }
 .schedule-root > .tab-wrap,
 .schedule-root > .legend-panel,
 .schedule-root > #filters { margin-left: 20px !important; margin-right: 20px !important; box-sizing: border-box; }
 #chart-wrap { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; border-left: 0 !important; border-right: 0 !important; border-radius: 0 !important; box-sizing: border-box; }
+#text-output { font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Hiragino Sans", "Yu Gothic", monospace; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; padding: 14px 20px 24px; margin: 0; color: var(--color-text-primary); -webkit-user-select: text; user-select: text; border-top: 0.5px solid var(--color-border-tertiary); }
+@media (max-width: 480px) {
+  #text-output { padding: 12px 16px 20px; font-size: 12px; }
+}
 @media (max-width: 480px) {
   .page-title { margin: 0 16px 14px; }
   .page-title-main { font-size: clamp(27px, 8.4vw, 32px); line-height: 0.95; white-space: nowrap; }
@@ -224,6 +235,7 @@ const DATA = {
 
 let currentDay = '4/29';
 let activeAreas = new Set(AREA_ORDER);
+let isTextMode = false;
 
 const START_HOUR = 7;
 const END_HOUR = 28;
@@ -262,6 +274,18 @@ function stageBgHtml() {
 }
 
 function render() {
+  const chartWrap = document.getElementById('chart-wrap');
+  const textOutput = document.getElementById('text-output');
+
+  if (isTextMode) {
+    chartWrap.style.display = 'none';
+    textOutput.style.display = 'block';
+    renderText();
+    return;
+  }
+  chartWrap.style.display = '';
+  textOutput.style.display = 'none';
+
   const sorted = [...DATA[currentDay]].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
   const theaters = sorted.filter(r => activeAreas.has(r.area));
   const chart = document.getElementById('chart');
@@ -367,6 +391,43 @@ function render() {
   });
 }
 
+function renderText() {
+  const sorted = [...DATA[currentDay]].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+  const theaters = sorted.filter(r => activeAreas.has(r.area));
+  const dayLabel = currentDay === '4/29' ? '4/29（水）' : '4/30（木）';
+
+  let text = `${dayLabel}\n\n`;
+
+  if (theaters.length === 0) {
+    text += '表示する劇場がありません。\n';
+    document.getElementById('text-output').textContent = text;
+    return;
+  }
+
+  let lastArea = null;
+  theaters.forEach(theater => {
+    if (theater.area !== lastArea) {
+      if (lastArea !== null) text += '\n';
+      text += `【${theater.area}】\n`;
+      lastArea = theater.area;
+    }
+    text += `${theater.theater}\n`;
+
+    const parsedShows = theater.shows
+      .map(parseShow)
+      .filter(p => p)
+      .sort((a, b) => toMin(a.start) - toMin(b.start));
+
+    parsedShows.forEach(p => {
+      const suffix = p.type === '通常' ? '' : `（${p.type}）`;
+      text += `  ${p.start}-${p.end}${suffix}\n`;
+    });
+    text += '\n';
+  });
+
+  document.getElementById('text-output').textContent = text;
+}
+
 function renderFilters() {
   const wrap = document.getElementById('filters');
   let html = `<div class="filter-panel" aria-label="地域フィルター">`;
@@ -374,6 +435,8 @@ function renderFilters() {
   html += `<button class="area-link" id="all-on" type="button">全表示</button>`;
   html += `<span class="area-slash">/</span>`;
   html += `<button class="area-link" id="all-off" type="button">全解除</button>`;
+  html += `<span class="area-slash">/</span>`;
+  html += `<button class="area-link" id="toggle-mode" type="button">${isTextMode ? 'デザイン表示' : 'テキスト表示'}</button>`;
   html += `</div>`;
   html += `<div class="area-check-row">`;
   html += AREA_ORDER.map(a =>
@@ -395,6 +458,11 @@ function renderFilters() {
   });
   document.getElementById('all-off').addEventListener('click', () => {
     activeAreas = new Set(); renderFilters(); render();
+  });
+  document.getElementById('toggle-mode').addEventListener('click', () => {
+    isTextMode = !isTextMode;
+    renderFilters();
+    render();
   });
 }
 
