@@ -39,9 +39,8 @@
 
 <div id="filters"></div>
 
-<div class="tab-wrap" role="tablist" aria-label="上映日切り替え">
-  <button id="tab29" class="tab active" role="tab" aria-selected="true">4/29（水）</button>
-  <button id="tab30" class="tab" role="tab" aria-selected="false">4/30（木）</button>
+<div class="tab-wrap" role="tablist" aria-label="上映日切り替え" id="tab-wrap">
+  <!-- タブはJSで動的生成 -->
 </div>
 
 <div class="legend-panel">
@@ -79,10 +78,17 @@
   .schedule-root > #filters { margin-left: 24px; margin-right: 24px; }
 }
 
-.tab-wrap { display: inline-flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--color-border-tertiary); }
-.tab { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 14px; padding: 8px 18px 7px; margin-bottom: -1px; transition: all 0.15s; }
+.tab-wrap { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--color-border-tertiary); overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tab-wrap::-webkit-scrollbar { display: none; }
+.tab { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 14px; padding: 8px 18px 7px; margin-bottom: -1px; transition: all 0.15s; flex-shrink: 0; white-space: nowrap; font-family: inherit; }
 .tab:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
 .tab.active { background: var(--color-background-primary); border-bottom-color: var(--color-text-primary); color: var(--color-text-primary); font-weight: 600; }
+.tab.is-empty { color: var(--color-text-tertiary); }
+.tab.is-empty.active { color: var(--color-text-secondary); border-bottom-color: var(--color-text-tertiary); }
+.empty-day { padding: 50px 20px; text-align: center; color: var(--color-text-tertiary); }
+.empty-day-icon { font-size: 32px; margin-bottom: 12px; }
+.empty-day-date { font-size: 16px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 12px; }
+.empty-day-msg { font-size: 12px; line-height: 1.7; }
 .filter-panel { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 10px; margin-bottom: 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); }
 .area-toolbar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--color-text-secondary); line-height: 1; }
 .area-link { appearance: none; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 11px; padding: 0; line-height: 1; }
@@ -161,7 +167,7 @@
   .area-check input { width: 12px; height: 12px; }
 
   .schedule-root > .tab-wrap { display: flex; width: calc(100% - 32px); margin-top: 8px; }
-  .tab { flex: 1; text-align: center; font-size: 15px; padding: 8px 6px 7px; }
+  .tab { flex: 0 0 auto; text-align: center; font-size: 14px; padding: 8px 14px 7px; }
 }
 </style>
 
@@ -190,10 +196,19 @@ function classify(type) {
   return '特別';
 }
 
-const STAGE_TIMES = {
-  '4/29': [['10:25', '13:30'], ['14:10', '16:55']],
-  '4/30': [['09:25', '12:30'], ['13:10', '15:55']]
-};
+// 上映日の設定（ここを編集すれば日付の追加・変更が反映されます）
+const DAYS = [
+  { key: '4/29', label: '4/29（水）', stageTimes: [['10:25', '13:30'], ['14:10', '16:55']] },
+  { key: '4/30', label: '4/30（木）', stageTimes: [['09:25', '12:30'], ['13:10', '15:55']] },
+  { key: '5/1',  label: '5/1（金）',  stageTimes: [] },
+  { key: '5/2',  label: '5/2（土）',  stageTimes: [] },
+  { key: '5/3',  label: '5/3（日）',  stageTimes: [] },
+  { key: '5/4',  label: '5/4（月）',  stageTimes: [] },
+  { key: '5/5',  label: '5/5（火）',  stageTimes: [] },
+  { key: '5/6',  label: '5/6（水）',  stageTimes: [] }
+];
+
+const getDay = key => DAYS.find(d => d.key === key);
 
 const AREA_ORDER = ['有楽町','日本橋','上野','池袋','新宿','渋谷','六本木','品川','大井町','お台場','二子玉川'];
 
@@ -233,10 +248,16 @@ const DATA = {
     {area:'大井町', theater:'TOHO大井町', shows:['08:40-10:50','09:25-12:30（中継）','13:10-15:49（中継）','16:20-18:30','19:10-21:20','20:40-22:50']},
     {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:25-12:30（中継）','11:40-14:04（ScreenX）','13:10-15:54（中継）','15:00-17:24','16:55-19:19（ScreenX）','17:25-19:49','20:10-22:34']},
 {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['09:25-12:30（中継）','11:20-13:40（IMAX）','13:10-15:55（中継）','15:50-18:10','18:35-20:55','21:05-23:25（IMAX）','21:20-23:40']},
-  ]
+  ],
+  '5/1': [],
+  '5/2': [],
+  '5/3': [],
+  '5/4': [],
+  '5/5': [],
+  '5/6': []
 };
 
-let currentDay = '4/29';
+let currentDay = (DAYS.find(d => DATA[d.key] && DATA[d.key].length > 0) || DAYS[0]).key;
 let activeAreas = new Set(AREA_ORDER);
 let isTextMode = false;
 
@@ -266,7 +287,8 @@ function buildTheaterRows(theater) {
 }
 
 function stageBgHtml() {
-  const ranges = STAGE_TIMES[currentDay] || [];
+  const dayConfig = DAYS.find(d => d.key === currentDay);
+  const ranges = (dayConfig && dayConfig.stageTimes) || [];
   return ranges.map(([s, e]) => {
     const sMin = toMin(s) - START_HOUR * 60;
     const eMin = toMin(e) - START_HOUR * 60;
@@ -289,7 +311,18 @@ function render() {
   chartWrap.style.display = '';
   textOutput.style.display = 'none';
 
-  const sorted = [...DATA[currentDay]].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+  const dayData = DATA[currentDay] || [];
+  if (dayData.length === 0) {
+    const dayConfig = getDay(currentDay);
+    const label = dayConfig ? dayConfig.label : currentDay;
+    document.getElementById('chart').innerHTML =
+      `<div class="empty-day"><div class="empty-day-icon">📅</div>` +
+      `<div class="empty-day-date">${label}</div>` +
+      `<div class="empty-day-msg">このスケジュールは準備中です。<br>公開までもう少しお待ちください。</div></div>`;
+    return;
+  }
+
+  const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
   const theaters = sorted.filter(r => activeAreas.has(r.area));
   const chart = document.getElementById('chart');
   const totalHours = END_HOUR - START_HOUR;
@@ -395,9 +428,18 @@ function render() {
 }
 
 function renderText() {
-  const sorted = [...DATA[currentDay]].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+  const dayData = DATA[currentDay] || [];
+  const dayConfig = getDay(currentDay);
+  const dayLabel = dayConfig ? dayConfig.label : currentDay;
+
+  if (dayData.length === 0) {
+    document.getElementById('text-output').textContent =
+      `${dayLabel}\n\nこのスケジュールは準備中です。\n公開までもう少しお待ちください。\n`;
+    return;
+  }
+
+  const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
   const theaters = sorted.filter(r => activeAreas.has(r.area));
-  const dayLabel = currentDay === '4/29' ? '4/29（水）' : '4/30（木）';
 
   let text = `${dayLabel}\n\n`;
 
@@ -469,23 +511,34 @@ function renderFilters() {
   });
 }
 
-document.getElementById('tab29').addEventListener('click', () => {
-  currentDay = '4/29';
-  document.getElementById('tab29').classList.add('active');
-  document.getElementById('tab29').setAttribute('aria-selected', 'true');
-  document.getElementById('tab30').classList.remove('active');
-  document.getElementById('tab30').setAttribute('aria-selected', 'false');
-  render();
-});
-document.getElementById('tab30').addEventListener('click', () => {
-  currentDay = '4/30';
-  document.getElementById('tab30').classList.add('active');
-  document.getElementById('tab30').setAttribute('aria-selected', 'true');
-  document.getElementById('tab29').classList.remove('active');
-  document.getElementById('tab29').setAttribute('aria-selected', 'false');
-  render();
-});
+// タブを動的生成: DAYS配列から作成し、データが空の日付は無効化
+function renderTabs() {
+  const wrap = document.getElementById('tab-wrap');
+  let html = '';
+  DAYS.forEach(day => {
+    const isActive = day.key === currentDay;
+    const hasData = (DATA[day.key] || []).length > 0;
+    const classes = ['tab'];
+    if (isActive) classes.push('active');
+    if (!hasData) classes.push('is-empty');
+    const ariaSelected = isActive ? 'true' : 'false';
+    const ariaDisabled = !hasData ? ' aria-disabled="true"' : '';
+    html += `<button class="${classes.join(' ')}" role="tab" aria-selected="${ariaSelected}"${ariaDisabled} data-day="${day.key}">${day.label}</button>`;
+  });
+  wrap.innerHTML = html;
 
+  wrap.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newDay = btn.dataset.day;
+      if (newDay === currentDay) return;
+      currentDay = newDay;
+      renderTabs();
+      render();
+    });
+  });
+}
+
+renderTabs();
 renderFilters();
 render();
 
