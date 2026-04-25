@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SAKAMOTO DAYS 都心部 上映スケジュール</title>
   <style>
     :root {
@@ -17,319 +17,404 @@
       --border-radius-sm: 4px;
       --border-radius-md: 8px;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 30px 0;
-      background: var(--color-background-primary);
-      color: var(--color-text-primary);
-      font-family: var(--font-sans);
-      /* 縦スクロールを確実にする */
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
-    .page-title { text-align: center; margin-bottom: 24px; }
-    .page-title-main { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-    .page-title-sub { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
-    .signature { margin-top: 8px; font-size: 12px; }
-    .signature a { color: #0066cc; text-decoration: none; }
-
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .tab {
-      padding: 8px 24px;
-      border: 1px solid var(--color-border-secondary);
-      background: #fff;
-      cursor: pointer;
-      border-radius: 20px;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    .tab.active {
-      background: var(--color-text-primary);
-      color: #fff;
-      border-color: var(--color-text-primary);
-    }
-
-    #filters {
-      padding: 0 16px;
-      max-width: 900px;
-      margin: 0 auto 20px;
-    }
-    .filter-group {
-      background: var(--color-background-secondary);
-      padding: 12px;
-      border-radius: var(--border-radius-md);
-    }
-    .filter-title { font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--color-text-secondary); }
-    .filter-buttons { display: flex; gap: 8px; margin-bottom: 12px; }
-    .filter-buttons button {
-      font-size: 11px;
-      padding: 4px 12px;
-      border: 1px solid var(--color-border-secondary);
-      background: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .area-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .area-list label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      background: #fff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--color-border-tertiary);
-    }
-
-    #chart-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    #chart-wrap {
-      position: relative;
-      border: 1px solid var(--color-border-tertiary);
-      background: #fff;
-      overflow-x: auto;
-      /* iOSでのスクロールを滑らかに */
-      -webkit-overflow-scrolling: touch;
-      /* 縦スクロールを邪魔しない設定 */
-      touch-action: pan-y;
-    }
-
-    .time-axis {
-      display: flex;
-      height: 30px;
-      border-bottom: 1px solid var(--color-border-tertiary);
-      background: var(--color-background-secondary);
-    }
-    .time-slot {
-      flex: none;
-      width: 60px;
-      font-size: 10px;
-      color: var(--color-text-tertiary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-right: 0.5px solid var(--color-border-tertiary);
-    }
-
-    .theater-row {
-      display: flex;
-      position: relative;
-      height: 44px;
-      border-bottom: 0.5px solid var(--color-border-tertiary);
-    }
-    .theater-name {
-      flex: none;
-      width: 140px;
-      padding: 0 12px;
-      display: flex;
-      align-items: center;
-      font-size: 11px;
-      font-weight: bold;
-      background: #fff;
-      border-right: 1px solid var(--color-border-tertiary);
-      position: sticky;
-      left: 0;
-      z-index: 10;
-    }
-    .timeline-area {
-      flex: none;
-      position: relative;
-      width: 1080px; /* 18時間 * 60px */
-      background-image: linear-gradient(to right, var(--color-border-tertiary) 0.5px, transparent 0.5px);
-      background-size: 60px 100%;
-    }
-
-    .bar {
-      position: absolute;
-      height: 24px; /* 指で押しやすい高さに微増 */
-      top: 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-      z-index: 5;
-      /* 縦スクロールを許可 */
-      touch-action: pan-y;
-    }
-    .bar:active { opacity: 0.7; }
-
-    #tip {
-      position: absolute;
-      display: none;
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 100;
-      pointer-events: none;
-      white-space: pre-line;
-    }
-
-    @media (max-width: 600px) {
-      .theater-name { width: 100px; font-size: 10px; padding: 0 6px; }
-      .timeline-area { width: 900px; background-size: 50px 100%; }
-      .time-slot { width: 50px; }
-      body { padding: 15px 0; }
-    }
+    body { margin: 30px 0; background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
   </style>
 </head>
 <body>
-
 <div class="page-title">
   <div class="page-title-main">SAKAMOTO DAYS</div>
-  <div class="page-title-sub">上映スケジュール</div>
-</div>
-
-<div class="tabs">
-  <div class="tab active" id="tab29">4/29</div>
-  <div class="tab" id="tab30">4/30</div>
-</div>
-
-<div id="filters"></div>
-
-<div id="chart-container">
-  <div id="chart-wrap">
-    <div class="time-axis" id="time-axis"></div>
-    <div id="chart"></div>
+  <div class="page-title-sub">都心部 上映スケジュール</div>
+  <div class="signature">
+    <a href="https://x.com/blacklolipop216" target="_blank" rel="noopener noreferrer">@kuroame</a>
   </div>
 </div>
 
-<div id="tip"></div>
+<div class="schedule-root">
+
+<div id="filters"></div>
+
+<div class="tab-wrap" role="tablist" aria-label="上映日切り替え">
+  <button id="tab29" class="tab active" role="tab" aria-selected="true">4/29（水）</button>
+  <button id="tab30" class="tab" role="tab" aria-selected="false">4/30（木）</button>
+</div>
+
+<div class="legend-panel">
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #E24B4A; display: inline-block; border-radius: 2px;"></span>舞台挨拶</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #EF9F27; display: inline-block; border-radius: 2px;"></span>中継</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #378ADD; display: inline-block; border-radius: 2px;"></span>ScreenX</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #7F77DD; display: inline-block; border-radius: 2px;"></span>IMAX</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #888780; display: inline-block; border-radius: 2px;"></span>通常</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(239, 159, 39, 0.15); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(239, 159, 39, 0.4);"></span>舞台挨拶の時間帯</div>
+</div>
+
+<div id="chart-wrap">
+  <div id="chart"></div>
+</div>
+
+
+<div id="tip" style="position: absolute; display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; pointer-events: none; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 240px;"></div>
+
+</div>
+
+<style>
+.schedule-root { font-family: var(--font-sans); color: var(--color-text-primary); padding: 0.5rem 0; }
+.schedule-root > .tab-wrap,
+.schedule-root > .legend-panel,
+.schedule-root > #filters { margin-left: 20px; margin-right: 20px; }
+.legend-panel { display: flex; flex-wrap: wrap; gap: 8px 12px; padding: 2px 0; background: transparent; border-radius: 0; margin-bottom: 10px; font-size: 11px; box-sizing: border-box; }
+#filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; box-sizing: border-box; }
+#chart-wrap { overflow-x: auto; border-top: 0.5px solid var(--color-border-tertiary); border-bottom: 0.5px solid var(--color-border-tertiary); border-left: 0; border-right: 0; border-radius: 0; position: relative; width: 100%; box-sizing: border-box; }
+@media (min-width: 768px) {
+  .schedule-root > .tab-wrap,
+  .schedule-root > .legend-panel,
+  .schedule-root > #filters { margin-left: 24px; margin-right: 24px; }
+}
+
+.tab-wrap { display: inline-flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--color-border-tertiary); }
+.tab { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 14px; padding: 8px 18px 7px; margin-bottom: -1px; transition: all 0.15s; }
+.tab:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.tab.active { background: var(--color-background-primary); border-bottom-color: var(--color-text-primary); color: var(--color-text-primary); font-weight: 600; }
+.filter-panel { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 10px; margin-bottom: 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); }
+.area-toolbar { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--color-text-secondary); line-height: 1; }
+.area-link { appearance: none; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 11px; padding: 0; line-height: 1; }
+.area-link:hover { color: var(--color-text-primary); text-decoration: underline; }
+.area-slash { color: var(--color-text-tertiary); user-select: none; }
+.area-check-row { display: flex; flex-wrap: wrap; gap: 6px 10px; width: 100%; }
+.area-check { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--color-text-secondary); cursor: pointer; user-select: none; }
+.area-check input { width: 13px; height: 13px; margin: 0; accent-color: #111111; cursor: pointer; }
+.area-check span { line-height: 1; }
+
+.bar { position: absolute; height: 16px; border-radius: 3px; cursor: pointer; transition: opacity 0.15s; overflow: hidden; z-index: 3; box-sizing: border-box; border: 1px solid #FFFFFF; }
+.bar:hover { opacity: 0.75; }
+.bar-label { font-size: 10px; color: white; padding: 0 3px; white-space: nowrap; line-height: 14px; display: block; }
+
+.header-cell { font-size: 11px; padding: 2px 10px; color: var(--color-text-secondary); box-sizing: border-box; }
+.hour-tick { font-size: 10px; color: var(--color-text-tertiary); text-align: center; border-left: 0.5px dashed var(--color-border-tertiary); padding: 2px 0; }
+
+.row-area-cell { font-size: 10px; color: var(--color-text-tertiary); padding: 0 6px 0 10px; border-right: 0.5px solid var(--color-border-tertiary); white-space: nowrap; display: flex; align-items: center; width: 64px; flex-shrink: 0; box-sizing: border-box; }
+.row-theater-cell { font-size: 12px; padding: 0 10px; white-space: nowrap; display: grid; grid-template-columns: 1fr 44px; align-items: center; gap: 12px; width: 196px; flex-shrink: 0; box-sizing: border-box; }
+.row-theater { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.kind-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--color-background-secondary); color: var(--color-text-secondary); text-align: center; justify-self: end; }
+
+.row-line { border-top: 0.5px dotted #ECECEC; }
+.theater-divider { border-top: 0.5px solid #DDDDDD; }
+.area-divider { border-top: 1px solid #BBBBBB; }
+
+.stage-bg { position: absolute; top: 0; bottom: 0; background: rgba(239, 159, 39, 0.1); pointer-events: none; z-index: 0; }
+
+.theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 4px; }
+
+.bar-area { position: relative; flex: 1; }
+
+@media (prefers-color-scheme: dark) {
+  .row-line { border-top-color: rgba(255,255,255,0.06); }
+  .theater-divider { border-top-color: rgba(255,255,255,0.12); }
+  .area-divider { border-top-color: rgba(255,255,255,0.25); }
+  .theater-watermark { color: #777; }
+}
+.page-title { margin: 0 20px 18px; line-height: 1.2; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.page-title-main { font-size: 35px; font-weight: 900; letter-spacing: -0.03em; }
+.page-title-sub { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; margin-top: 6px; color: var(--color-text-secondary); }
+.signature { margin: 6px 0 0; font-size: 11px; text-align: left; color: var(--color-text-tertiary); }
+.signature a { color: inherit; text-decoration: none; }
+.signature a:hover { text-decoration: underline; }
+.schedule-root { width: 100%; box-sizing: border-box; }
+.schedule-root > .tab-wrap,
+.schedule-root > .legend-panel,
+.schedule-root > #filters { margin-left: 20px !important; margin-right: 20px !important; box-sizing: border-box; }
+#chart-wrap { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; border-left: 0 !important; border-right: 0 !important; border-radius: 0 !important; box-sizing: border-box; }
+@media (max-width: 480px) {
+  .page-title { margin: 0 16px 14px; }
+  .page-title-main { font-size: clamp(27px, 8.4vw, 32px); line-height: 0.95; white-space: nowrap; }
+  .page-title-sub { font-size: 13px; margin-top: 12px; }
+  .signature { font-size: 11px; margin-top: 6px; }
+
+  .schedule-root > .tab-wrap,
+  .schedule-root > .legend-panel,
+  .schedule-root > #filters { margin-left: 16px !important; margin-right: 16px !important; }
+
+  .legend-panel { gap: 4px 8px; padding: 0; margin-bottom: 8px; font-size: 10px; }
+  .legend-panel div { gap: 4px !important; }
+  .legend-panel span { width: 10px !important; height: 8px !important; }
+
+  .filter-panel { gap: 5px; padding: 7px 8px; }
+  .area-toolbar,
+  .area-link { font-size: 11px; }
+  .area-check-row { gap: 4px 8px; }
+  .area-check { gap: 3px; font-size: 11px; }
+  .area-check input { width: 12px; height: 12px; }
+
+  .schedule-root > .tab-wrap { display: flex; width: calc(100% - 32px); margin-top: 8px; }
+  .tab { flex: 1; text-align: center; font-size: 15px; padding: 8px 6px 7px; }
+}
+</style>
 
 <script>
-const RAW_DATA = `
-4/29,新宿,新宿ピカデリー,09:00,10:40
-4/29,新宿,新宿ピカデリー,12:00,13:40
-4/29,渋谷,TOHOシネマズ渋谷,10:00,11:40
-4/29,渋谷,TOHOシネマズ渋谷,14:30,16:10
-4/30,新宿,新宿ピカデリー,10:00,11:40
-4/30,池袋,グランドシネマサンシャイン池袋,11:00,12:40
-`;
+const COLORS = {
+  '通常': '#888780',
+  '中継': '#EF9F27',
+  'IMAX': '#7F77DD',
+  'IMAX GT': '#7F77DD',
+  'Dolby': '#97C459',
+  'ScreenX': '#378ADD',
+  '舞台挨拶': '#E24B4A'
+};
 
-const AREA_ORDER = ["新宿", "渋谷", "池袋", "銀座", "六本木"];
-const START_HOUR = 8;
-const HOURS = 18;
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+
+function parseShow(str) {
+  const m = str.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})(?:（(.+?)）)?/);
+  if (!m) return null;
+  return { start: m[1], end: m[2], type: m[3] || '通常' };
+}
+
+function classify(type) {
+  if (type === '通常') return '通常';
+  if (type === '舞台挨拶') return '舞台挨拶';
+  return '特別';
+}
+
+const STAGE_TIMES = {
+  '4/29': [['10:25', '13:30'], ['14:10', '16:55']],
+  '4/30': [['09:25', '12:30'], ['13:10', '15:55']]
+};
+
+const AREA_ORDER = ['有楽町','日本橋','上野','池袋','新宿','渋谷','六本木','品川','大井町','お台場','二子玉川'];
+
+const DATA = {
+  '4/29': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['09:10-11:40（Dolby）','10:25-13:30（舞台挨拶）','13:25-15:35（IMAX）','14:10-16:49（舞台挨拶）','17:20-19:30','18:45-21:15（IMAX）','20:20-22:50']},
+    {area:'日本橋', theater:'TOHO日本橋', shows:['07:40-09:50','10:25-13:30（中継）','14:10-16:49（中継）','15:40-17:50','18:30-20:40','20:45-23:10']},
+    {area:'上野', theater:'TOHO上野', shows:['08:40-10:50','10:25-13:30（中継）','14:10-16:49（中継）','17:25-19:35','20:15-22:40']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['10:25-13:30（中継）','14:10-16:49（中継）','15:30-17:40','17:20-19:30','20:00-22:28']},
+    {area:'池袋', theater:'TOHO池袋', shows:['08:30-10:40','10:25-13:30（中継）','14:10-16:49（中継）','17:30-19:40（ScreenX）','20:20-22:48（ScreenX）','21:20-23:45']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:00-10:19（ScreenX）','10:25-13:30（中継）','11:35-13:59（IMAX GT）','13:10-15:29','14:10-16:54（中継）','15:45-18:04（ScreenX）','18:15-20:34（Dolby）','20:00-22:24（IMAX GT）','20:40-22:59']},
+    {area:'新宿', theater:'TOHO新宿', shows:['08:50-11:00','10:25-13:30（中継）','14:10-16:49（中継）','16:00-18:10（IMAX）','19:05-21:30','20:15-22:40（Dolby）','21:35-24:00（IMAX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['08:30-10:40','10:25-13:30（中継）','14:10-16:49（中継）','16:10-18:20','18:50-21:00','21:30-23:40','23:50-26:10']},
+    {area:'新宿', theater:'新宿ピカデリー', shows:['08:05-10:25','10:25-13:30（中継）','14:10-16:55（中継）','15:55-18:15','18:50-21:10','21:20-23:40']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['10:25-13:30（中継）','11:05-13:25（ScreenX）','14:10-16:55（中継）','15:40-18:00','16:30-18:50','18:55-21:15（ScreenX）','21:05-23:25']},
+    {area:'渋谷', theater:'TOHO渋谷', shows:['08:15-10:25','10:25-13:30（中継）','14:10-16:49（中継）','16:10-18:20','17:25-19:35','20:50-23:15']},
+    {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['08:20-10:30','10:25-13:30（中継）','14:10-16:54（Dolby）','18:50-21:00','21:45-24:10']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:45-10:55（IMAX）','10:25-13:30（中継）','14:10-16:49（中継）','16:10-18:20','18:25-20:45（IMAX）','20:25-22:45']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:40-10:50','10:25-13:30（中継）','14:10-16:49（中継）','17:20-19:30','20:10-22:35']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:25-11:35','10:25-13:30（中継）','11:40-13:50（ScreenX）','14:10-16:49（中継）','16:55-19:19（ScreenX）','17:20-19:30','20:10-22:34']},
+{area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','10:25-13:30（中継）','11:20-13:40（IMAX）','14:10-16:55（中継）','15:45-18:05','18:25-20:45','21:05-23:25（IMAX）']},
+  ],
+  '4/30': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['09:25-12:30（中継）','13:10-15:49（中継）','13:40-15:50（IMAX）','15:40-17:50（Dolby）','18:45-20:55','19:00-21:10（IMAX）','21:40-23:50']},
+    {area:'日本橋', theater:'TOHO日本橋', shows:['07:55-10:05','09:25-12:30（中継）','13:10-15:49（中継）','15:35-17:45','18:30-20:40']},
+    {area:'上野', theater:'TOHO上野', shows:['09:25-12:30（中継）','13:10-15:49（中継）','15:35-17:45','18:35-20:45','21:30-23:40']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['09:25-12:30（中継）','13:10-15:49（中継）','16:15-18:25','18:15-20:25','20:20-22:40']},
+    {area:'池袋', theater:'TOHO池袋', shows:['08:30-10:40（ScreenX）','09:25-12:30（中継）','13:10-15:49（中継）','16:30-18:40','19:20-21:45','21:20-23:45（ScreenX）']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:00-10:19（ScreenX）','09:25-12:30（中継）','11:35-13:59（IMAX GT）','13:10-15:54（中継）','15:35-17:54（Dolby）','15:45-18:04（ScreenX）','18:15-20:34（Dolby）','20:00-22:24（IMAX GT）','20:40-22:59（Dolby）']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:10-11:20','09:25-12:30（舞台挨拶）','11:00-13:10','12:25-14:35','13:10-15:49（舞台挨拶）','15:20-17:30','19:00-21:25','21:10-23:35（Dolby）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['09:25-12:30（中継）','13:10-15:49（中継）','14:30-16:50','16:00-18:20','18:40-21:00','21:20-23:40','25:25-27:45']},
+    {area:'新宿', theater:'新宿ピカデリー', shows:['09:25-12:30（中継）','13:10-15:55（中継）','16:00-18:20','16:35-18:55','18:55-21:15','21:30-23:50']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:15-11:35','09:25-12:30（中継）','11:30-13:50（ScreenX）','13:10-15:55（中継）','14:40-17:00','19:05-21:25（ScreenX）','21:30-23:50']},
+    {area:'渋谷', theater:'TOHO渋谷', shows:['09:25-12:30（中継）','11:50-14:00','13:10-15:49（中継）','14:45-16:55','17:40-19:50','20:35-22:45']},
+    {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:25-12:30（中継）','13:10-15:49（中継）','16:30-18:40','18:35-20:45','21:30-23:55']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['09:25-12:30（中継）','11:15-13:35（IMAX）','13:10-15:49（中継）','16:20-18:40','18:25-20:45（IMAX）','20:35-22:55']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:40-10:50','09:25-12:30（中継）','13:10-15:49（中継）','16:20-18:30','19:10-21:20','20:40-22:50']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:25-12:30（中継）','11:40-14:04（ScreenX）','13:10-15:54（中継）','15:00-17:24','16:55-19:19（ScreenX）','17:25-19:49','20:10-22:34']},
+{area:'二子玉川', theater:'109シネマズ二子玉川', shows:['09:25-12:30（中継）','11:20-13:40（IMAX）','13:10-15:55（中継）','15:50-18:10','18:35-20:55','21:05-23:25（IMAX）','21:20-23:40']},
+  ]
+};
 
 let currentDay = '4/29';
 let activeAreas = new Set(AREA_ORDER);
 
-const data = RAW_DATA.trim().split('\n').map(line => {
-  const [day, area, theater, start, end] = line.split(',');
-  return { day, area, theater, start, end };
-});
+const START_HOUR = 7;
+const END_HOUR = 28;
+const AREA_W = 64;
+const THEATER_W = 196;
+const HOUR_W = 48;
 
-function getMinutes(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  return h * 60 + m;
+// 行高: 通常行=32px、劇場の1行目=42px
+const ROW_H_NORMAL = 32;
+const ROW_H_FIRST = 42;
+const BAR_H = 16;
+
+function buildTheaterRows(theater) {
+  const groups = { '通常': [], '特別': [], '舞台挨拶': [] };
+  theater.shows.forEach(s => {
+    const p = parseShow(s);
+    if (!p) return;
+    groups[classify(p.type)].push(p);
+  });
+  const rows = [];
+  if (groups['舞台挨拶'].length > 0) rows.push({kind:'舞台挨拶', shows: groups['舞台挨拶']});
+  if (groups['通常'].length > 0) rows.push({kind:'通常', shows: groups['通常']});
+  if (groups['特別'].length > 0) rows.push({kind:'特別', shows: groups['特別']});
+  return rows;
+}
+
+function stageBgHtml() {
+  const ranges = STAGE_TIMES[currentDay] || [];
+  return ranges.map(([s, e]) => {
+    const sMin = toMin(s) - START_HOUR * 60;
+    const eMin = toMin(e) - START_HOUR * 60;
+    const left = (sMin / 60) * HOUR_W;
+    const width = ((eMin - sMin) / 60) * HOUR_W;
+    return `<div class="stage-bg" style="left: ${left}px; width: ${width}px;"></div>`;
+  }).join('');
+}
+
+function render() {
+  const sorted = [...DATA[currentDay]].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+  const theaters = sorted.filter(r => activeAreas.has(r.area));
+  const chart = document.getElementById('chart');
+  const totalHours = END_HOUR - START_HOUR;
+  const chartWidth = AREA_W + THEATER_W + totalHours * HOUR_W;
+
+  let html = '';
+  html += `<div style="display: flex; min-width: ${chartWidth}px; border-bottom: 0.5px solid var(--color-border-tertiary); background: #F7F7F7;">`;
+  html += `<div class="header-cell" style="width: ${AREA_W}px; flex-shrink: 0; border-right: 0.5px solid var(--color-border-tertiary);">地域</div>`;
+  html += `<div class="header-cell" style="width: ${THEATER_W}px; flex-shrink: 0;">劇場 / 種別</div>`;
+  html += `<div style="position: relative; flex: 1;">`;
+  html += `<div style="display: grid; grid-template-columns: repeat(${totalHours}, ${HOUR_W}px);">`;
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    const label = h >= 24 ? `${h-24}:00` : `${h}:00`;
+    html += `<div class="hour-tick">${label}</div>`;
+  }
+  html += `</div></div></div>`;
+
+  let lastArea = null;
+
+  theaters.forEach(theater => {
+    const rows = buildTheaterRows(theater);
+    if (rows.length === 0) return;
+
+    const isFirstInArea = theater.area !== lastArea;
+    const showAreaLabel = isFirstInArea;
+
+    rows.forEach((row, rIdx) => {
+      const isFirstRow = rIdx === 0;
+      const rowH = isFirstRow ? ROW_H_FIRST : ROW_H_NORMAL;
+
+      let borderClass = '';
+      if (isFirstRow) {
+        if (isFirstInArea && lastArea !== null) {
+          borderClass = 'area-divider';
+        } else if (!isFirstInArea) {
+          borderClass = 'theater-divider';
+        }
+      } else {
+        borderClass = 'row-line';
+      }
+
+      html += `<div class="${borderClass}" style="display: flex; min-width: ${chartWidth}px; height: ${rowH}px;">`;
+      html += `<div class="row-area-cell" style="height: ${rowH}px;">`;
+      if (showAreaLabel && isFirstRow) {
+        html += `${theater.area}`;
+      }
+      html += `</div>`;
+      html += `<div class="row-theater-cell" style="height: ${rowH}px;">`;
+      if (isFirstRow) {
+        html += `<span class="row-theater">${theater.theater}</span>`;
+      } else {
+        html += `<span class="row-theater"></span>`;
+      }
+      html += `<span class="kind-badge">${row.kind}</span>`;
+      html += `</div>`;
+      html += `<div class="bar-area" style="height: ${rowH}px;">`;
+      html += stageBgHtml();
+      if (isFirstRow) {
+        html += `<div class="theater-watermark">${theater.theater}</div>`;
+      }
+      for (let h = 1; h < totalHours; h++) {
+        html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
+      }
+      // 1行目: ラベル(上8px+padding4px=12px)の下にバー、それ以外は中央
+      const barTop = isFirstRow ? 18 : Math.round((rowH - BAR_H) / 2);
+      row.shows.forEach(p => {
+        const sMin = toMin(p.start) - START_HOUR * 60;
+        const eMin = toMin(p.end) - START_HOUR * 60;
+        const left = (sMin / 60) * HOUR_W;
+        const width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
+        const color = COLORS[p.type] || COLORS['通常'];
+        const suffix = p.type === '通常' ? '' : `（${p.type}）`;
+        const labelText = `${p.start}${suffix}`;
+        const tipText = `${theater.theater}\n${p.start}-${p.end}${suffix}`;
+        html += `<div class="bar" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${color};">`;
+        html += `<span class="bar-label">${labelText}</span>`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
+    });
+    lastArea = theater.area;
+  });
+
+  if (theaters.length === 0) {
+    html += `<div style="padding: 2rem; text-align: center; color: var(--color-text-tertiary); font-size: 13px;">表示する劇場がありません。</div>`;
+  }
+
+  chart.innerHTML = html;
+
+  const tip = document.getElementById('tip');
+  chart.querySelectorAll('.bar').forEach(bar => {
+    bar.addEventListener('mouseenter', () => {
+      tip.textContent = bar.dataset.tip;
+      tip.style.whiteSpace = 'pre-line';
+      tip.style.display = 'block';
+    });
+    bar.addEventListener('mousemove', e => {
+      tip.style.left = (e.pageX + 12) + 'px';
+      tip.style.top = (e.pageY + 12) + 'px';
+    });
+    bar.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  });
 }
 
 function renderFilters() {
   const wrap = document.getElementById('filters');
-  const areas = [...new Set(data.map(d => d.area))].sort((a,b) => AREA_ORDER.indexOf(a) - AREA_ORDER.indexOf(b));
-  
-  let html = `<div class="filter-group">`;
-  html += `<div class="filter-title">エリア絞り込み</div>`;
-  html += `<div class="filter-buttons"><button id="all-on">すべて選択</button><button id="all-off">解除</button></div>`;
-  html += `<div class="area-list">`;
-  html += areas.map(a => 
-    `<label><input type="checkbox" data-area="${a}" ${activeAreas.has(a) ? 'checked' : ''}><span>${a}</span></label>`
+  let html = `<div class="filter-panel" aria-label="地域フィルター">`;
+  html += `<div class="area-toolbar">`;
+  html += `<button class="area-link" id="all-on" type="button">全表示</button>`;
+  html += `<span class="area-slash">/</span>`;
+  html += `<button class="area-link" id="all-off" type="button">全解除</button>`;
+  html += `</div>`;
+  html += `<div class="area-check-row">`;
+  html += AREA_ORDER.map(a =>
+    `<label class="area-check"><input type="checkbox" data-area="${a}" ${activeAreas.has(a) ? 'checked' : ''}><span>${a}</span></label>`
   ).join('');
-  html += `</div></div>`;
+  html += `</div>`;
+  html += `</div>`;
   wrap.innerHTML = html;
 
   wrap.querySelectorAll('[data-area]').forEach(input => {
     input.addEventListener('change', () => {
-      if (input.checked) activeAreas.add(input.dataset.area);
-      else activeAreas.delete(input.dataset.area);
+      const a = input.dataset.area;
+      if (input.checked) activeAreas.add(a); else activeAreas.delete(a);
       render();
     });
   });
-
-  document.getElementById('all-on').onclick = () => { activeAreas = new Set(AREA_ORDER); renderFilters(); render(); };
-  document.getElementById('all-off').onclick = () => { activeAreas = new Set(); renderFilters(); render(); };
+  document.getElementById('all-on').addEventListener('click', () => {
+    activeAreas = new Set(AREA_ORDER); renderFilters(); render();
+  });
+  document.getElementById('all-off').addEventListener('click', () => {
+    activeAreas = new Set(); renderFilters(); render();
+  });
 }
 
-function render() {
-  // 時間軸
-  const axis = document.getElementById('time-axis');
-  const slotWidth = window.innerWidth <= 600 ? 50 : 60;
-  axis.innerHTML = `<div style="width:${window.innerWidth <= 600 ? 100 : 140}px; flex:none;"></div>` + 
-    Array.from({length: HOURS}, (_, i) => `<div class="time-slot" style="width:${slotWidth}px">${START_HOUR + i}:00</div>`).join('');
-
-  // チャート本体
-  const chart = document.getElementById('chart');
-  const filtered = data.filter(d => d.day === currentDay && activeAreas.has(d.area));
-  const theaters = [...new Set(filtered.map(d => d.theater))];
-
-  chart.innerHTML = theaters.map(t => {
-    const tData = filtered.filter(d => d.theater === t);
-    return `
-      <div class="theater-row">
-        <div class="theater-name">${t}</div>
-        <div class="timeline-area" style="width:${slotWidth * HOURS}px; background-size:${slotWidth}px 100%;">
-          ${tData.map(d => {
-            const left = (getMinutes(d.start) - START_HOUR * 60) * (slotWidth / 60);
-            const width = (getMinutes(d.end) - getMinutes(d.start)) * (slotWidth / 60);
-            return `<div class="bar" style="left:${left}px; width:${width}px; background:#e11d48;" 
-                     data-tip="${d.theater}\n${d.start} - ${d.end}"></div>`;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // ツールチップ制御（スマホでは非表示にしてスクロールを優先）
-  const tip = document.getElementById('tip');
-  const isTouch = 'ontouchstart' in window;
-
-  if (!isTouch) {
-    document.querySelectorAll('.bar').forEach(bar => {
-      bar.onmouseenter = (e) => {
-        tip.textContent = bar.dataset.tip;
-        tip.style.display = 'block';
-      };
-      bar.onmousemove = (e) => {
-        tip.style.left = (e.pageX + 10) + 'px';
-        tip.style.top = (e.pageY + 10) + 'px';
-      };
-      bar.onmouseleave = () => tip.style.display = 'none';
-    });
-  }
-}
-
-document.getElementById('tab29').onclick = function() {
+document.getElementById('tab29').addEventListener('click', () => {
   currentDay = '4/29';
-  this.classList.add('active');
+  document.getElementById('tab29').classList.add('active');
+  document.getElementById('tab29').setAttribute('aria-selected', 'true');
   document.getElementById('tab30').classList.remove('active');
+  document.getElementById('tab30').setAttribute('aria-selected', 'false');
   render();
-};
-document.getElementById('tab30').onclick = function() {
+});
+document.getElementById('tab30').addEventListener('click', () => {
   currentDay = '4/30';
-  this.classList.add('active');
+  document.getElementById('tab30').classList.add('active');
+  document.getElementById('tab30').setAttribute('aria-selected', 'true');
   document.getElementById('tab29').classList.remove('active');
+  document.getElementById('tab29').setAttribute('aria-selected', 'false');
   render();
-};
+});
 
-window.onresize = render;
 renderFilters();
 render();
 </script>
