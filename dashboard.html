@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAKAMOTO DAYS 情報収集ダッシュボード</title>
+  <style>
+    :root {
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --color-text-primary: #111111;
+      --color-text-secondary: #555555;
+      --color-text-tertiary: #888888;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f7f7f7;
+      --color-border-secondary: #d6d6d6;
+      --color-border-tertiary: #e5e5e5;
+      --border-radius-sm: 4px;
+      --border-radius-md: 8px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 30px 0; background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
+
+    .page-title { margin: 0 20px 18px; line-height: 1.2; }
+    .page-title-main { font-size: 35px; font-weight: 900; letter-spacing: -0.03em; }
+    .page-title-sub { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; margin-top: 6px; color: var(--color-text-secondary); }
+    .signature { margin: 6px 0 0; font-size: 11px; text-align: left; color: var(--color-text-tertiary); }
+    .signature a { color: inherit; text-decoration: none; }
+    .signature a:hover { text-decoration: underline; }
+    .disclaimer { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--color-text-tertiary); }
+
+    .nav-back { margin: 0 20px 20px; }
+    .nav-back a { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; padding: 6px 10px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-sm); background: var(--color-background-primary); transition: all 0.15s; }
+    .nav-back a:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+
+    .dashboard-root { padding: 0 20px 30px; }
+
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 14px; font-weight: 700; margin: 0 0 10px; color: var(--color-text-primary); display: flex; align-items: center; gap: 6px; }
+    .section-desc { font-size: 11px; color: var(--color-text-tertiary); margin: 0 0 12px; line-height: 1.5; }
+
+    /* Hero card (まずはここから) */
+    .hero-card { display: block; padding: 16px 18px; border: 1px solid var(--color-text-primary); border-radius: var(--border-radius-md); background: var(--color-background-primary); text-decoration: none; color: var(--color-text-primary); transition: all 0.15s; position: relative; }
+    .hero-card:hover { background: var(--color-background-secondary); }
+    .hero-card-label { font-size: 10px; color: var(--color-text-tertiary); letter-spacing: 0.06em; margin-bottom: 4px; }
+    .hero-card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .hero-card-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+    .hero-card-arrow { position: absolute; top: 16px; right: 16px; font-size: 14px; color: var(--color-text-tertiary); }
+
+    /* Tour mode */
+    .tour-panel { padding: 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); }
+    .tour-progress-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 11px; color: var(--color-text-secondary); }
+    .tour-progress-count { font-weight: 600; color: var(--color-text-primary); font-size: 13px; }
+    .tour-progress-bar { height: 6px; background: var(--color-background-primary); border-radius: 3px; overflow: hidden; margin-bottom: 12px; border: 0.5px solid var(--color-border-tertiary); }
+    .tour-progress-fill { height: 100%; background: var(--color-text-primary); transition: width 0.3s; width: 0%; }
+    .tour-next-info { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+    .tour-next-name { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--color-text-primary); min-height: 1.2em; }
+    .tour-buttons { display: flex; gap: 8px; }
+    .tour-btn { appearance: none; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: var(--border-radius-sm); cursor: pointer; min-height: 44px; font-family: inherit; transition: all 0.15s; }
+    .tour-btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); flex: 1; }
+    .tour-btn-primary:hover { opacity: 0.85; }
+    .tour-btn-primary:disabled { background: var(--color-text-tertiary); border-color: var(--color-text-tertiary); cursor: not-allowed; opacity: 0.6; }
+    .tour-btn-secondary:hover { background: var(--color-background-secondary); }
+
+    /* Aggregate sites */
+    .agg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .agg-card { display: block; padding: 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-primary); text-decoration: none; color: var(--color-text-primary); transition: all 0.15s; }
+    .agg-card:hover { background: var(--color-background-secondary); }
+    .agg-card-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .agg-card-desc { font-size: 10px; color: var(--color-text-tertiary); line-height: 1.4; }
+
+    /* Theater list */
+    .area-block { margin-bottom: 14px; }
+    .area-label { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; padding-left: 2px; }
+    .theater-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .theater-card { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-sm); background: var(--color-background-primary); text-decoration: none; color: var(--color-text-primary); transition: all 0.15s; min-height: 48px; }
+    .theater-card:hover { background: var(--color-background-secondary); border-color: var(--color-border-secondary); }
+    .theater-card-name { font-size: 12px; font-weight: 500; flex: 1; }
+    .theater-card-arrow { font-size: 12px; color: var(--color-text-tertiary); margin-left: 6px; }
+    .theater-card.tour-current { border: 1px solid var(--color-text-primary); background: var(--color-background-secondary); }
+    .theater-card.tour-done { opacity: 0.5; }
+
+    @media (max-width: 480px) {
+      body { margin: 20px 0; }
+      .page-title { margin: 0 16px 14px; }
+      .page-title-main { font-size: clamp(24px, 7.5vw, 30px); line-height: 1; white-space: nowrap; }
+      .page-title-sub { font-size: 12px; margin-top: 8px; }
+      .nav-back { margin: 0 16px 16px; }
+      .dashboard-root { padding: 0 16px 24px; }
+      .section { margin-bottom: 22px; }
+      .agg-grid { grid-template-columns: 1fr; }
+      .theater-grid { grid-template-columns: 1fr; }
+      .hero-card-title { font-size: 14px; }
+      .tour-buttons { flex-direction: column; }
+      .tour-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-title">
+  <div class="page-title-main">SAKAMOTO DAYS</div>
+  <div class="page-title-sub">情報収集ダッシュボード</div>
+  <div class="signature">
+    <a href="https://x.com/blacklolipop216" target="_blank" rel="noopener noreferrer">@kuroame</a>
+  </div>
+  <div class="disclaimer">
+    ※ 上映スケジュール情報の収集を補助するための個人用ダッシュボードです。<br>
+    各リンク先サイトの情報の正確性については、各サイトの運営者の責任となります。
+  </div>
+</div>
+
+<div class="nav-back">
+  <a href="index.html">← スケジュール表へ戻る</a>
+</div>
+
+<div class="dashboard-root">
+
+  <!-- Hero: Movie Walker All Tokyo -->
+  <div class="section">
+    <div class="section-title">🌟 まずはここから（一覧で確認）</div>
+    <div class="section-desc">東京都の全劇場のスケジュールが1ページで見られます。ブックマークレットも使えます。</div>
+    <a href="https://press.moviewalker.jp/mv91100/schedule/P_tokyo/" class="hero-card">
+      <div class="hero-card-label">MOVIE WALKER PRESS</div>
+      <div class="hero-card-title">東京都 SAKAMOTO DAYS 上映劇場一覧</div>
+      <div class="hero-card-desc">全劇場のスケジュールを一覧で表示</div>
+      <div class="hero-card-arrow">→</div>
+    </a>
+  </div>
+
+  <!-- Tour Mode -->
+  <div class="section">
+    <div class="section-title">🚶 巡回モード（1劇場ずつ順番に）</div>
+    <div class="section-desc">「次へ」ボタンで全16劇場を順番に巡回できます。進捗はブラウザに保存されます。</div>
+    <div class="tour-panel">
+      <div class="tour-progress-row">
+        <div>進捗</div>
+        <div class="tour-progress-count"><span id="tour-current">0</span> / <span id="tour-total">16</span></div>
+      </div>
+      <div class="tour-progress-bar">
+        <div class="tour-progress-fill" id="tour-fill"></div>
+      </div>
+      <div class="tour-next-info" id="tour-next-info">次の劇場</div>
+      <div class="tour-next-name" id="tour-next-name">—</div>
+      <div class="tour-buttons">
+        <button class="tour-btn tour-btn-primary" id="tour-next-btn">▶ 次の劇場へ</button>
+        <button class="tour-btn tour-btn-secondary" id="tour-reset-btn">↻ リセット</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aggregate sites -->
+  <div class="section">
+    <div class="section-title">📋 まとめサイト</div>
+    <div class="section-desc">全国の上映情報を確認できる集約サイトです。</div>
+    <div class="agg-grid">
+      <a href="https://eiga.com/movie/104665/" class="agg-card">
+        <div class="agg-card-name">映画.com</div>
+        <div class="agg-card-desc">作品ページ・レビュー</div>
+      </a>
+      <a href="https://press.moviewalker.jp/mv91100/schedule/" class="agg-card">
+        <div class="agg-card-name">MOVIE WALKER（全国）</div>
+        <div class="agg-card-desc">全国の上映劇場一覧</div>
+      </a>
+      <a href="https://eigakan.org/theaterpage/schedule.php?t=skmtdaysmovie" class="agg-card">
+        <div class="agg-card-name">映画館に行こう！</div>
+        <div class="agg-card-desc">東宝公式 上映劇場一覧</div>
+      </a>
+      <a href="https://skmtdays-movie.jp/" class="agg-card">
+        <div class="agg-card-name">公式サイト</div>
+        <div class="agg-card-desc">映画『SAKAMOTO DAYS』</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Theater list (individual) -->
+  <div class="section">
+    <div class="section-title">🏢 各劇場の個別ページ</div>
+    <div class="section-desc">劇場別のスケジュールページに直接アクセスできます。</div>
+    <div id="theater-list"></div>
+  </div>
+
+</div>
+
+<script>
+// 劇場リスト（地域順、巡回順もこの並び）
+const THEATERS = [
+  { area: '有楽町',   name: 'TOHOシネマズ 日比谷',           url: 'https://press.moviewalker.jp/mv91100/schedule/th742/' },
+  { area: '日本橋',   name: 'TOHOシネマズ 日本橋',           url: 'https://press.moviewalker.jp/mv91100/schedule/th689/' },
+  { area: '上野',     name: 'TOHOシネマズ 上野',             url: 'https://press.moviewalker.jp/mv91100/schedule/th735/' },
+  { area: '池袋',     name: '池袋HUMAXシネマズ',              url: 'https://press.moviewalker.jp/mv91100/schedule/th193/' },
+  { area: '池袋',     name: 'TOHOシネマズ 池袋',             url: 'https://press.moviewalker.jp/mv91100/schedule/th774/' },
+  { area: '池袋',     name: 'グランドシネマサンシャイン 池袋', url: 'https://press.moviewalker.jp/mv91100/schedule/th760/' },
+  { area: '新宿',     name: 'TOHOシネマズ 新宿',             url: 'https://press.moviewalker.jp/mv91100/schedule/th705/' },
+  { area: '新宿',     name: '新宿バルト9',                    url: 'https://press.moviewalker.jp/mv91100/schedule/th309/' },
+  { area: '新宿',     name: '新宿ピカデリー',                 url: 'https://press.moviewalker.jp/mv91100/schedule/th432/' },
+  { area: '新宿',     name: '109シネマズプレミアム新宿',       url: 'https://press.moviewalker.jp/mv91100/schedule/th822/' },
+  { area: '渋谷',     name: 'TOHOシネマズ 渋谷',             url: 'https://press.moviewalker.jp/mv91100/schedule/th376/' },
+  { area: '六本木',   name: 'TOHOシネマズ 六本木ヒルズ',      url: 'https://press.moviewalker.jp/mv91100/schedule/th107/' },
+  { area: '品川',     name: 'T・ジョイPRINCE品川',            url: 'https://press.moviewalker.jp/mv91100/schedule/th131/' },
+  { area: '大井町',   name: 'TOHOシネマズ 大井町',           url: 'https://press.moviewalker.jp/mv91100/schedule/th858/' },
+  { area: 'お台場',   name: 'ユナイテッド・シネマ アクアシティお台場', url: 'https://press.moviewalker.jp/mv91100/schedule/th727/' },
+  { area: '二子玉川', name: '109シネマズ二子玉川',            url: 'https://press.moviewalker.jp/mv91100/schedule/th707/' }
+];
+
+const STORAGE_KEY = 'skmtdays_tour_index';
+
+// === 巡回モード ===
+function getTourIndex() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    const n = v === null ? 0 : parseInt(v, 10);
+    return (isNaN(n) || n < 0) ? 0 : Math.min(n, THEATERS.length);
+  } catch (e) {
+    return 0;
+  }
+}
+function setTourIndex(n) {
+  try { localStorage.setItem(STORAGE_KEY, String(n)); } catch (e) {}
+}
+
+function updateTourUI() {
+  const idx = getTourIndex();
+  const total = THEATERS.length;
+  const fill = document.getElementById('tour-fill');
+  const nextBtn = document.getElementById('tour-next-btn');
+  const nextInfo = document.getElementById('tour-next-info');
+  const nextName = document.getElementById('tour-next-name');
+
+  document.getElementById('tour-current').textContent = idx;
+  document.getElementById('tour-total').textContent = total;
+  fill.style.width = (idx / total * 100) + '%';
+
+  if (idx >= total) {
+    nextInfo.textContent = '✓ 巡回完了！';
+    nextName.textContent = 'お疲れさまでした';
+    nextBtn.textContent = '✓ 完了';
+    nextBtn.disabled = true;
+  } else {
+    const next = THEATERS[idx];
+    nextInfo.textContent = '次の劇場';
+    nextName.textContent = `【${next.area}】 ${next.name}`;
+    nextBtn.textContent = idx === 0 ? '▶ 巡回モードを開始' : `▶ 次の劇場へ（${idx + 1}/${total}）`;
+    nextBtn.disabled = false;
+  }
+
+  // 劇場リストにマーカー
+  document.querySelectorAll('.theater-card').forEach((card, i) => {
+    card.classList.remove('tour-current', 'tour-done');
+    if (i < idx) card.classList.add('tour-done');
+    else if (i === idx) card.classList.add('tour-current');
+  });
+}
+
+document.getElementById('tour-next-btn').addEventListener('click', () => {
+  const idx = getTourIndex();
+  if (idx >= THEATERS.length) return;
+  const target = THEATERS[idx];
+  setTourIndex(idx + 1);
+  // 同一ウィンドウで遷移
+  window.location.href = target.url;
+});
+
+document.getElementById('tour-reset-btn').addEventListener('click', () => {
+  if (getTourIndex() === 0) {
+    alert('まだ進捗がありません。');
+    return;
+  }
+  if (confirm('巡回モードの進捗をリセットしますか？')) {
+    setTourIndex(0);
+    updateTourUI();
+  }
+});
+
+// === 劇場リスト描画 ===
+function renderTheaterList() {
+  const wrap = document.getElementById('theater-list');
+  // 地域ごとにグルーピング
+  const grouped = [];
+  let lastArea = null;
+  let currentGroup = null;
+  THEATERS.forEach((t, i) => {
+    if (t.area !== lastArea) {
+      currentGroup = { area: t.area, theaters: [] };
+      grouped.push(currentGroup);
+      lastArea = t.area;
+    }
+    currentGroup.theaters.push({ ...t, index: i });
+  });
+
+  let html = '';
+  grouped.forEach(g => {
+    html += `<div class="area-block">`;
+    html += `<div class="area-label">【${g.area}】</div>`;
+    html += `<div class="theater-grid">`;
+    g.theaters.forEach(t => {
+      html += `<a href="${t.url}" class="theater-card" data-index="${t.index}">`;
+      html += `<span class="theater-card-name">${t.name}</span>`;
+      html += `<span class="theater-card-arrow">→</span>`;
+      html += `</a>`;
+    });
+    html += `</div></div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+renderTheaterList();
+updateTourUI();
+</script>
+
+</body>
+</html>
