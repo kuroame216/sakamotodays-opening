@@ -1,2 +1,2 @@
 # SAKAMOTO DAYS公開日都心部映画スケジュール
-SAKAMOTO DAYS Opening Screening Schedule
+##舞台挨拶と中継がある29日30日にできるだけ効率よくたくさん映画を観るためのガントチャート
