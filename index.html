@@ -32,6 +32,10 @@
     ※ 個人による非公式の集計です。情報は調査時点のものです。<br>
     最新情報は各劇場の公式サイトをご確認ください。<br>
     ※ マイリスト機能の選択状態はお使いのブラウザに保存されます。<br>
+※ Googleカレンダーへの登録には、Googleアカウントへのログインが必要です。<br>
+※ Googleアカウントをお持ちでない方は「コピー」機能をご利用ください。<br>
+
+
     <a href="https://press.moviewalker.jp/mv91100/schedule/P_tokyo/" target="_blank" rel="noopener noreferrer" class="disclaimer-link">&gt;&gt; 東京都の上映スケジュール（MOVIE WALKER PRESS）</a>
   </div>
 </div>
@@ -66,6 +70,7 @@
     <div class="mylist-title">マイリスト <span id="mylist-count"></span></div>
     <button class="mylist-clear-btn" id="mylist-clear" type="button" aria-label="マイリストの選択を全てクリア">× 選択をクリア</button>
   </div>
+  <div class="mylist-help">📅 をタップでGoogleカレンダーに登録できます</div>
   <div id="mylist-content"></div>
   <div class="mylist-actions">
     <button class="area-link" id="mylist-copy" type="button">コピー</button>
@@ -169,9 +174,13 @@
 #mylist-content { font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Hiragino Sans", "Yu Gothic", monospace; font-size: 12px; line-height: 1.7; color: var(--color-text-primary); margin-bottom: 10px; -webkit-user-select: text; user-select: text; }
 .mylist-day-label { font-weight: 600; margin-top: 6px; }
 .mylist-day-label:first-child { margin-top: 0; }
-.mylist-item { padding-left: 1em; }
-.mylist-item .remove-btn { display: inline-block; margin-left: 4px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; }
+.mylist-item { padding-left: 1em; display: flex; align-items: baseline; gap: 4px; }
+.mylist-item .cal-btn { display: inline-block; cursor: pointer; user-select: none; flex-shrink: 0; padding: 0 2px; font-size: 12px; line-height: 1.7; transition: opacity 0.15s; }
+.mylist-item .cal-btn:hover { opacity: 0.7; }
+.mylist-item .item-text { flex: 1; min-width: 0; }
+.mylist-item .remove-btn { display: inline-block; margin-left: auto; padding-left: 8px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; flex-shrink: 0; }
 .mylist-item .remove-btn:hover { color: var(--color-text-primary); }
+.mylist-help { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 8px; line-height: 1.5; }
 .mylist-actions { display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
 .mylist-only-active { font-weight: 700; color: var(--color-text-primary) !important; }
 @media (max-width: 480px) {
@@ -721,7 +730,7 @@ function renderMylist() {
     html += `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>`;
     g.items.forEach(it => {
       const suffix = it.type === '通常' ? '' : `（${escapeHtml(it.type)}）`;
-      html += `<div class="mylist-item">${escapeHtml(it.start)}-${escapeHtml(it.end)} ${escapeHtml(it.theater)}${suffix}<span class="remove-btn" data-id="${escapeHtml(it.id)}" title="削除">×</span></div>`;
+      html += `<div class="mylist-item"><span class="cal-btn" data-id="${escapeHtml(it.id)}" title="Googleカレンダーに登録" role="button" tabindex="0">📅</span><span class="item-text">${escapeHtml(it.start)}-${escapeHtml(it.end)} ${escapeHtml(it.theater)}${suffix}</span><span class="remove-btn" data-id="${escapeHtml(it.id)}" title="削除" role="button" tabindex="0">×</span></div>`;
     });
   });
   content.innerHTML = html;
@@ -749,6 +758,16 @@ function renderMylist() {
       saveMylist(mylist);
       renderMylist();
       render();
+    });
+  });
+  // 個別カレンダー登録ボタン
+  content.querySelectorAll('.cal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      if (!id) return;
+      const item = findMylistItemById(id);
+      if (!item) return;
+      window.open(buildGCalUrl(item), '_blank', 'noopener,noreferrer');
     });
   });
 }
@@ -803,6 +822,82 @@ function flashMylistButton(id, msg) {
   const original = btn.textContent;
   btn.textContent = msg;
   setTimeout(() => { btn.textContent = original; }, 1500);
+}
+
+// === カレンダー登録（Google Calendar） ===
+const CALENDAR_BASE_YEAR = 2026; // データの基準年
+const SITE_URL = 'https://kuroame216.github.io/sakamotodays-opening/';
+
+// "4/29" + "10:25" を Date オブジェクトに変換
+// 翌日0時以降の表記（例: 25:25 = 翌日1:25）にも対応
+function buildDateTime(dayKey, timeStr) {
+  const [m, d] = dayKey.split('/').map(Number);
+  let [hh, mm] = timeStr.split(':').map(Number);
+  let dayOffset = 0;
+  if (hh >= 24) { hh -= 24; dayOffset = 1; }
+  const dt = new Date(CALENDAR_BASE_YEAR, m - 1, d + dayOffset, hh, mm, 0);
+  return dt;
+}
+
+// Google Calendar の dates パラメータ用フォーマット (YYYYMMDDTHHMMSS、ローカル時刻)
+function fmtGCalLocal(dt) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+}
+
+// 各劇場の住所（Googleマップで位置確定するために使用）
+// ※ 正確性は要検証。実機で位置がズレている劇場があれば修正してください。
+const THEATER_ADDRESSES = {
+  'TOHO日比谷':                    '東京都千代田区有楽町1-1-2 東京ミッドタウン日比谷',
+  'TOHO日本橋':                    '東京都中央区日本橋室町1-4-1 コレド室町2',
+  'TOHO上野':                      '東京都台東区上野3-24-6 上野フロンティアタワー',
+  '池袋HUMAXシネマズ':              '東京都豊島区東池袋1-22-10 ヒューマックスパビリオン池袋',
+  'TOHO池袋':                      '東京都豊島区東池袋1-30-3',
+  'グランドシネマサンシャイン池袋':  '東京都豊島区東池袋1-30-3 サンシャインシティ',
+  'TOHO新宿':                      '東京都新宿区歌舞伎町1-19-1',
+  '新宿バルト9':                    '東京都新宿区新宿3-1-26 新宿三丁目イーストビル',
+  '新宿ピカデリー':                 '東京都新宿区新宿3-15-15',
+  '109シネマズプレミアム新宿':      '東京都新宿区歌舞伎町1-29-1 東急歌舞伎町タワー',
+  'TOHO渋谷':                      '東京都渋谷区道玄坂2-6-17',
+  'TOHO六本木ヒルズ':               '東京都港区六本木6-10-2 六本木ヒルズ',
+  'T・ジョイPRINCE品川':            '東京都港区高輪4-10-30 グランドプリンスホテル新高輪',
+  'TOHO大井町':                    '東京都品川区大井1-3-6 阪急大井町ガーデン',
+  'ユナイテッド・シネマ アクアシティお台場': '東京都港区台場1-7-1 アクアシティお台場',
+  '109シネマズ二子玉川':            '東京都世田谷区玉川1-14-1 二子玉川ライズS.C.'
+};
+
+function buildGCalUrl(item) {
+  // item: { day, theater, start, end, type }
+  const startDt = buildDateTime(item.day, item.start);
+  const endDt = buildDateTime(item.day, item.end);
+  const title = `SAKAMOTO DAYS @ ${item.theater}`;
+  const typeText = item.type !== '通常' ? `上映種別: ${item.type}\n` : '';
+  const details = `${typeText}※ 情報は調査時点のものです。最新は劇場公式サイトをご確認ください。\n${SITE_URL}`;
+  // 住所がわかる劇場は「劇場名, 住所」の形式で渡す（Googleマップに位置を伝える）
+  const address = THEATER_ADDRESSES[item.theater];
+  const location = address ? `${item.theater}, ${address}` : item.theater;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${fmtGCalLocal(startDt)}/${fmtGCalLocal(endDt)}`,
+    details: details,
+    location: location,
+    ctz: 'Asia/Tokyo'
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+// マイリストの選択IDから対応するアイテムを引く
+function findMylistItemById(id) {
+  const groups = buildMylistData();
+  for (const g of groups) {
+    for (const it of g.items) {
+      if (it.id === id) {
+        return { day: g.key, theater: it.theater, start: it.start, end: it.end, type: it.type };
+      }
+    }
+  }
+  return null;
 }
 
 function renderFilters() {
