@@ -31,6 +31,7 @@
   <div class="disclaimer">
     ※ 個人による非公式の集計です。情報は調査時点のものです。<br>
     最新情報は各劇場の公式サイトをご確認ください。<br>
+    ※ マイリスト機能の選択状態はお使いのブラウザに保存されます。<br>
     <a href="https://press.moviewalker.jp/mv91100/schedule/P_tokyo/" target="_blank" rel="noopener noreferrer" class="disclaimer-link">&gt;&gt; 東京都の上映スケジュール（MOVIE WALKER PRESS）</a>
   </div>
 </div>
@@ -51,6 +52,7 @@
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #888780; display: inline-block; border-radius: 2px;"></span>通常</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(239, 159, 39, 0.15); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(239, 159, 39, 0.4);"></span>舞台挨拶の時間帯</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(75, 156, 211, 0.22); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(75, 156, 211, 0.5);"></span>空き時間（2h以上）</div>
 </div>
 
 <div id="chart-wrap">
@@ -58,6 +60,19 @@
 </div>
 
 <div id="text-output" style="display: none;"></div>
+
+<div id="mylist-section" style="display: none;">
+  <div class="mylist-header">
+    <div class="mylist-title">マイリスト <span id="mylist-count"></span></div>
+    <button class="mylist-clear-btn" id="mylist-clear" type="button" aria-label="マイリストの選択を全てクリア">× 選択をクリア</button>
+  </div>
+  <div id="mylist-content"></div>
+  <div class="mylist-actions">
+    <button class="area-link" id="mylist-copy" type="button">コピー</button>
+    <span class="area-slash">/</span>
+    <button class="area-link" id="mylist-only" type="button">マイリストのみ表示</button>
+  </div>
+</div>
 
 
 <div id="tip" style="position: absolute; display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; pointer-events: none; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 240px;"></div>
@@ -100,6 +115,10 @@
 .area-check span { line-height: 1; }
 
 .bar { position: absolute; height: 16px; border-radius: 3px; cursor: pointer; transition: opacity 0.15s; overflow: hidden; z-index: 3; box-sizing: border-box; border: 1px solid #FFFFFF; }
+.bar.selected { border-color: rgba(255,255,255,0.95); }
+.mylist-row { border-bottom: 1.5px solid #BBBBBB; background: rgba(0,0,0,0.02); }
+.mylist-row .row-area-cell { font-weight: 600; color: var(--color-text-primary); }
+.mylist-row .row-theater { font-weight: 700; }
 .bar:hover { opacity: 0.75; }
 .bar-label { font-size: 10px; color: white; padding: 0 3px; white-space: nowrap; line-height: 14px; display: block; }
 
@@ -116,6 +135,7 @@
 .area-divider { border-top: 1px solid #BBBBBB; }
 
 .stage-bg { position: absolute; top: 0; bottom: 0; background: rgba(239, 159, 39, 0.1); pointer-events: none; z-index: 0; }
+.free-slot-bg { position: absolute; top: 0; bottom: 0; background: rgba(75, 156, 211, 0.18); pointer-events: none; z-index: 0; }
 
 .theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 4px; }
 
@@ -136,6 +156,28 @@
 .disclaimer { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--color-text-tertiary); }
 .disclaimer-link { display: inline-block; margin-top: 4px; color: var(--color-text-secondary); text-decoration: none; }
 .disclaimer-link:hover { color: var(--color-text-primary); text-decoration: underline; }
+
+/* マイリスト */
+#mylist-section { margin: 16px 20px 0; padding: 12px 14px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); box-sizing: border-box; }
+.mylist-header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.mylist-title { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+#mylist-count { font-size: 11px; color: var(--color-text-tertiary); font-weight: normal; }
+.mylist-clear-btn { appearance: none; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-size: 11px; padding: 4px 8px; border-radius: var(--border-radius-sm); font-family: inherit; line-height: 1; transition: all 0.15s; flex-shrink: 0; }
+.mylist-clear-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-text-tertiary); }
+.mylist-clear-btn.confirming { background: #E24B4A; color: #FFFFFF; border-color: #E24B4A; font-weight: 600; }
+.mylist-clear-btn.confirming:hover { background: #C73D3C; border-color: #C73D3C; }
+#mylist-content { font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Hiragino Sans", "Yu Gothic", monospace; font-size: 12px; line-height: 1.7; color: var(--color-text-primary); margin-bottom: 10px; -webkit-user-select: text; user-select: text; }
+.mylist-day-label { font-weight: 600; margin-top: 6px; }
+.mylist-day-label:first-child { margin-top: 0; }
+.mylist-item { padding-left: 1em; }
+.mylist-item .remove-btn { display: inline-block; margin-left: 4px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; }
+.mylist-item .remove-btn:hover { color: var(--color-text-primary); }
+.mylist-actions { display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
+.mylist-only-active { font-weight: 700; color: var(--color-text-primary) !important; }
+@media (max-width: 480px) {
+  #mylist-section { margin: 14px 16px 0; padding: 10px 12px; }
+  #mylist-content { font-size: 11px; }
+}
 .schedule-root { width: 100%; box-sizing: border-box; }
 .schedule-root > .tab-wrap,
 .schedule-root > .legend-panel,
@@ -260,6 +302,25 @@ const DATA = {
 let currentDay = (DAYS.find(d => DATA[d.key] && DATA[d.key].length > 0) || DAYS[0]).key;
 let activeAreas = new Set(AREA_ORDER);
 let isTextMode = false;
+let mylistOnly = false;
+
+// === マイリスト管理 ===
+const MYLIST_STORAGE_KEY = 'sakamotodays_mylist_v1';
+function makeShowId(day, theaterName, start, end, type) {
+  return `${day}|${theaterName}|${start}-${end}|${type || '通常'}`;
+}
+function loadMylist() {
+  try {
+    const raw = localStorage.getItem(MYLIST_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) { return new Set(); }
+}
+function saveMylist(set) {
+  try { localStorage.setItem(MYLIST_STORAGE_KEY, JSON.stringify([...set])); } catch (e) {}
+}
+let mylist = loadMylist();
 
 const START_HOUR = 7;
 const END_HOUR = 28;
@@ -298,6 +359,94 @@ function stageBgHtml() {
   }).join('');
 }
 
+// 現在表示中の日付の選択回から、2時間以上の「空き時間」を計算してハイライト用divを返す
+function freeSlotBgHtml() {
+  const dayData = DATA[currentDay] || [];
+  const selectedShows = [];
+  dayData.forEach(theater => {
+    theater.shows.forEach(s => {
+      const p = parseShow(s);
+      if (!p) return;
+      if (mylist.has(makeShowId(currentDay, theater.theater, p.start, p.end, p.type))) {
+        selectedShows.push(p);
+      }
+    });
+  });
+  // 2件未満なら空き時間の概念がない
+  if (selectedShows.length < 2) return '';
+  // 開始時刻順にソート
+  selectedShows.sort((a, b) => toMin(a.start) - toMin(b.start));
+  // 隣接する回の隙間を計算（2時間以上=120分以上）
+  const FREE_THRESHOLD_MIN = 120;
+  const ranges = [];
+  for (let i = 0; i < selectedShows.length - 1; i++) {
+    const endMin = toMin(selectedShows[i].end);
+    const nextStartMin = toMin(selectedShows[i + 1].start);
+    if (nextStartMin - endMin >= FREE_THRESHOLD_MIN) {
+      ranges.push([endMin, nextStartMin]);
+    }
+  }
+  if (ranges.length === 0) return '';
+  return ranges.map(([sMin, eMin]) => {
+    const offsetS = sMin - START_HOUR * 60;
+    const offsetE = eMin - START_HOUR * 60;
+    const left = (offsetS / 60) * HOUR_W;
+    const width = ((offsetE - offsetS) / 60) * HOUR_W;
+    return `<div class="free-slot-bg" style="left: ${left}px; width: ${width}px;"></div>`;
+  }).join('');
+}
+
+// 現在表示中の日付の選択回をタイムライン上に表示する専用行
+function buildMylistRowHtml(chartWidth, totalHours) {
+  const dayData = DATA[currentDay] || [];
+  // 現在の日付の選択回を集める
+  const selectedShows = [];
+  dayData.forEach(theater => {
+    theater.shows.forEach(s => {
+      const p = parseShow(s);
+      if (!p) return;
+      const id = makeShowId(currentDay, theater.theater, p.start, p.end, p.type);
+      if (mylist.has(id)) {
+        selectedShows.push({ ...p, theater: theater.theater, id });
+      }
+    });
+  });
+  if (selectedShows.length === 0) return '';
+  selectedShows.sort((a, b) => toMin(a.start) - toMin(b.start));
+
+  const rowH = ROW_H_FIRST;
+  const barTop = 18;
+  let html = '';
+  html += `<div class="mylist-row" style="display: flex; min-width: ${chartWidth}px; height: ${rowH}px;">`;
+  html += `<div class="row-area-cell" style="height: ${rowH}px;"></div>`;
+  html += `<div class="row-theater-cell" style="height: ${rowH}px;">`;
+  html += `<span class="row-theater">マイリスト</span>`;
+  html += `<span class="kind-badge">${selectedShows.length}件</span>`;
+  html += `</div>`;
+  html += `<div class="bar-area" style="height: ${rowH}px;">`;
+  html += stageBgHtml();
+  html += freeSlotBgHtml();
+  html += `<div class="theater-watermark">マイリスト</div>`;
+  for (let h = 1; h < totalHours; h++) {
+    html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
+  }
+  selectedShows.forEach(p => {
+    const sMin = toMin(p.start) - START_HOUR * 60;
+    const eMin = toMin(p.end) - START_HOUR * 60;
+    const left = (sMin / 60) * HOUR_W;
+    const width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
+    const color = COLORS[p.type] || COLORS['通常'];
+    const suffix = p.type === '通常' ? '' : `（${p.type}）`;
+    const labelText = `${p.start}${suffix}`;
+    const tipText = `${p.theater}\n${p.start}-${p.end}${suffix}`;
+    html += `<div class="bar selected" data-show-id="${p.id.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${color};">`;
+    html += `<span class="bar-label">${labelText}</span>`;
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
 function render() {
   const chartWrap = document.getElementById('chart-wrap');
   const textOutput = document.getElementById('text-output');
@@ -323,7 +472,17 @@ function render() {
   }
 
   const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
-  const theaters = sorted.filter(r => activeAreas.has(r.area));
+  let theaters = sorted.filter(r => activeAreas.has(r.area));
+  // マイリストのみモードでは、選択回がある劇場のみ表示
+  if (mylistOnly) {
+    theaters = theaters.filter(theater => {
+      return theater.shows.some(s => {
+        const p = parseShow(s);
+        if (!p) return false;
+        return mylist.has(makeShowId(currentDay, theater.theater, p.start, p.end, p.type));
+      });
+    });
+  }
   const chart = document.getElementById('chart');
   const totalHours = END_HOUR - START_HOUR;
   const chartWidth = AREA_W + THEATER_W + totalHours * HOUR_W;
@@ -339,6 +498,9 @@ function render() {
     html += `<div class="hour-tick">${label}</div>`;
   }
   html += `</div></div></div>`;
+
+  // マイリスト行（選択中の回がある場合のみ表示、チャート最上部）
+  html += buildMylistRowHtml(chartWidth, totalHours);
 
   let lastArea = null;
 
@@ -380,6 +542,7 @@ function render() {
       html += `</div>`;
       html += `<div class="bar-area" style="height: ${rowH}px;">`;
       html += stageBgHtml();
+      html += freeSlotBgHtml();
       if (isFirstRow) {
         html += `<div class="theater-watermark">${theater.theater}</div>`;
       }
@@ -389,6 +552,9 @@ function render() {
       // 1行目: ラベル(上8px+padding4px=12px)の下にバー、それ以外は中央
       const barTop = isFirstRow ? 18 : Math.round((rowH - BAR_H) / 2);
       row.shows.forEach(p => {
+        const showId = makeShowId(currentDay, theater.theater, p.start, p.end, p.type);
+        // マイリストのみモードでは、選択されてない回はスキップ
+        if (mylistOnly && !mylist.has(showId)) return;
         const sMin = toMin(p.start) - START_HOUR * 60;
         const eMin = toMin(p.end) - START_HOUR * 60;
         const left = (sMin / 60) * HOUR_W;
@@ -397,7 +563,9 @@ function render() {
         const suffix = p.type === '通常' ? '' : `（${p.type}）`;
         const labelText = `${p.start}${suffix}`;
         const tipText = `${theater.theater}\n${p.start}-${p.end}${suffix}`;
-        html += `<div class="bar" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${color};">`;
+        const isSelected = mylist.has(showId);
+        const selectedClass = isSelected ? ' selected' : '';
+        html += `<div class="bar${selectedClass}" data-show-id="${showId.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${color};">`;
         html += `<span class="bar-label">${labelText}</span>`;
         html += `</div>`;
       });
@@ -424,6 +592,21 @@ function render() {
       tip.style.top = (e.pageY + 12) + 'px';
     });
     bar.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    bar.addEventListener('click', () => {
+      const id = bar.dataset.showId;
+      if (!id) return;
+      if (mylist.has(id)) {
+        mylist.delete(id);
+        bar.classList.remove('selected');
+      } else {
+        mylist.add(id);
+        bar.classList.add('selected');
+      }
+      saveMylist(mylist);
+      renderMylist();
+      // チャート最上部のマイタイムライン行と空き時間ハイライトを更新するため再描画
+      render();
+    });
   });
 }
 
@@ -464,13 +647,162 @@ function renderText() {
       .sort((a, b) => toMin(a.start) - toMin(b.start));
 
     parsedShows.forEach(p => {
+      const showId = makeShowId(currentDay, theater.theater, p.start, p.end, p.type);
+      const star = mylist.has(showId) ? '★ ' : '  ';
       const suffix = p.type === '通常' ? '' : `（${p.type}）`;
-      text += `  ${p.start}-${p.end}${suffix}\n`;
+      text += `${star}${p.start}-${p.end}${suffix}\n`;
     });
     text += '\n';
   });
 
   document.getElementById('text-output').textContent = text;
+}
+
+// === マイリスト描画 ===
+function buildMylistData() {
+  // 選択ID群を日付ごとにグループ化し、データから詳細を引く
+  const result = {};
+  DAYS.forEach(day => {
+    const dayData = DATA[day.key] || [];
+    dayData.forEach(theater => {
+      theater.shows.forEach(s => {
+        const p = parseShow(s);
+        if (!p) return;
+        const id = makeShowId(day.key, theater.theater, p.start, p.end, p.type);
+        if (!mylist.has(id)) return;
+        if (!result[day.key]) result[day.key] = [];
+        result[day.key].push({
+          area: theater.area,
+          theater: theater.theater,
+          start: p.start,
+          end: p.end,
+          type: p.type,
+          id
+        });
+      });
+    });
+  });
+  // 日付の表示順に
+  const ordered = [];
+  DAYS.forEach(d => {
+    if (result[d.key]) {
+      // 開始時刻順にソート
+      result[d.key].sort((a, b) => toMin(a.start) - toMin(b.start));
+      ordered.push({ key: d.key, label: d.label, items: result[d.key] });
+    }
+  });
+  return ordered;
+}
+
+function renderMylist() {
+  const section = document.getElementById('mylist-section');
+  const content = document.getElementById('mylist-content');
+  const countEl = document.getElementById('mylist-count');
+  const onlyBtn = document.getElementById('mylist-only');
+
+  const groups = buildMylistData();
+  const totalCount = groups.reduce((acc, g) => acc + g.items.length, 0);
+
+  if (totalCount === 0) {
+    section.style.display = 'none';
+    // 0件になったらマイリストのみモードも解除
+    if (mylistOnly) {
+      mylistOnly = false;
+      render();
+    }
+    return;
+  }
+
+  section.style.display = '';
+  countEl.textContent = `(${totalCount}件)`;
+
+  let html = '';
+  groups.forEach(g => {
+    html += `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>`;
+    g.items.forEach(it => {
+      const suffix = it.type === '通常' ? '' : `（${escapeHtml(it.type)}）`;
+      html += `<div class="mylist-item">${escapeHtml(it.start)}-${escapeHtml(it.end)} ${escapeHtml(it.theater)}${suffix}<span class="remove-btn" data-id="${escapeHtml(it.id)}" title="削除">×</span></div>`;
+    });
+  });
+  content.innerHTML = html;
+
+  // マイリストのみボタンの状態（テキストモード時はチャート絞り込みが無関係なので非表示）
+  if (onlyBtn) {
+    onlyBtn.textContent = mylistOnly ? '全ての劇場を表示' : 'マイリストのみ表示';
+    onlyBtn.classList.toggle('mylist-only-active', mylistOnly);
+    const onlySlash = onlyBtn.previousElementSibling;
+    if (isTextMode) {
+      onlyBtn.style.display = 'none';
+      if (onlySlash && onlySlash.classList.contains('area-slash')) onlySlash.style.display = 'none';
+    } else {
+      onlyBtn.style.display = '';
+      if (onlySlash && onlySlash.classList.contains('area-slash')) onlySlash.style.display = '';
+    }
+  }
+
+  // 個別削除ボタン
+  content.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      if (!id) return;
+      mylist.delete(id);
+      saveMylist(mylist);
+      renderMylist();
+      render();
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function buildMylistText() {
+  const groups = buildMylistData();
+  if (groups.length === 0) return '';
+  let text = 'SAKAMOTO DAYS 観たい回リスト\n\n';
+  groups.forEach(g => {
+    text += `【${g.label}】\n`;
+    g.items.forEach(it => {
+      const suffix = it.type === '通常' ? '' : `（${it.type}）`;
+      text += `・${it.start}-${it.end} ${it.theater}${suffix}\n`;
+    });
+    text += '\n';
+  });
+  return text.trimEnd() + '\n';
+}
+
+function copyMylist() {
+  const text = buildMylistText();
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      flashMylistButton('mylist-copy', 'コピーしました');
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  // フォールバック: テキストエリアを使う
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); flashMylistButton('mylist-copy', 'コピーしました'); }
+  catch (e) { alert('コピーに失敗しました。手動でコピーしてください:\n\n' + text); }
+  document.body.removeChild(ta);
+}
+function flashMylistButton(id, msg) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const original = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(() => { btn.textContent = original; }, 1500);
 }
 
 function renderFilters() {
@@ -506,8 +838,11 @@ function renderFilters() {
   });
   document.getElementById('toggle-mode').addEventListener('click', () => {
     isTextMode = !isTextMode;
+    // テキストモードに入るとき、マイリストのみモードは解除（チャート専用機能）
+    if (isTextMode && mylistOnly) mylistOnly = false;
     renderFilters();
     render();
+    renderMylist();
   });
 }
 
@@ -541,6 +876,54 @@ function renderTabs() {
 renderTabs();
 renderFilters();
 render();
+renderMylist();
+
+// マイリストのアクションボタン
+document.getElementById('mylist-copy').addEventListener('click', copyMylist);
+document.getElementById('mylist-only').addEventListener('click', () => {
+  mylistOnly = !mylistOnly;
+  renderMylist();
+  render();
+});
+// 全クリアボタン: 2段階確認方式（誤タップ防止＆ネイティブconfirmの不安定性回避）
+(function setupMylistClear() {
+  const btn = document.getElementById('mylist-clear');
+  if (!btn) return;
+  let confirmTimer = null;
+  const ORIGINAL_TEXT = '× 選択をクリア';
+  const CONFIRM_TEXT = 'もう一度押すと全削除';
+  function reset() {
+    btn.textContent = ORIGINAL_TEXT;
+    btn.classList.remove('confirming');
+    if (confirmTimer) { clearTimeout(confirmTimer); confirmTimer = null; }
+  }
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (mylist.size === 0) return;
+    if (btn.classList.contains('confirming')) {
+      // 2回目のタップ: 実行
+      mylist.clear();
+      saveMylist(mylist);
+      mylistOnly = false;
+      reset();
+      renderMylist();
+      render();
+    } else {
+      // 1回目のタップ: 確認モードに
+      btn.textContent = CONFIRM_TEXT;
+      btn.classList.add('confirming');
+      // 3秒以内に2回目のタップがなければキャンセル
+      confirmTimer = setTimeout(reset, 3000);
+    }
+  });
+  // 他の場所をタップしたらキャンセル
+  document.addEventListener('click', (e) => {
+    if (btn.classList.contains('confirming') && !btn.contains(e.target)) {
+      reset();
+    }
+  });
+})();
 
 // === iOS Safari 縦スクロール対応 ===
 // チャート部分のタッチ方向を判定し、縦スワイプの場合はページをスクロール
