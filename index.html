@@ -45,7 +45,8 @@
 <div id="filters"></div>
 
 <div class="tab-wrap" role="tablist" aria-label="上映日切り替え" id="tab-wrap">
-  </div>
+  <!-- タブはJSで動的生成 -->
+</div>
 
 <div class="legend-panel">
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #E24B4A; display: inline-block; border-radius: 2px;"></span>舞台挨拶</div>
@@ -84,7 +85,6 @@
 </div>
 
 <style>
-/* (CSS部分は既存と全く同じため省略) */
 .schedule-root { font-family: var(--font-sans); color: var(--color-text-primary); padding: 0.5rem 0; }
 .schedule-root > .tab-wrap,
 .schedule-root > .legend-panel,
@@ -105,6 +105,13 @@
 .tab.active { background: var(--color-background-primary); border-bottom-color: var(--color-text-primary); color: var(--color-text-primary); font-weight: 600; }
 .tab.is-empty { color: var(--color-text-tertiary); }
 .tab.is-empty.active { color: var(--color-text-secondary); border-bottom-color: var(--color-text-tertiary); }
+.tab.is-past { opacity: 0.55; }
+.tab.is-past .tab-sublabel { display: block; font-size: 9px; line-height: 1; color: var(--color-text-tertiary); margin-top: 2px; letter-spacing: 0.5px; }
+.tab.is-past.active { opacity: 1; }
+.past-toggle { appearance: none; background: var(--color-background-secondary); border: 0; border-right: 1px solid var(--color-border-tertiary); border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 12px; padding: 8px 12px 7px; margin-bottom: -1px; flex-shrink: 0; white-space: nowrap; font-family: inherit; transition: all 0.15s; line-height: 1.3; }
+.past-toggle:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+.past-toggle .toggle-arrow { display: inline-block; margin-right: 4px; transition: transform 0.2s; font-size: 10px; }
+.past-toggle.expanded .toggle-arrow { transform: rotate(90deg); }
 .empty-day { padding: 50px 20px; text-align: center; color: var(--color-text-tertiary); }
 .empty-day-icon { font-size: 32px; margin-bottom: 12px; }
 .empty-day-date { font-size: 16px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 12px; }
@@ -178,7 +185,7 @@
 .mylist-item .cal-btn { display: inline-block; cursor: pointer; user-select: none; flex-shrink: 0; padding: 0 2px; font-size: 12px; line-height: 1.7; transition: opacity 0.15s; }
 .mylist-item .cal-btn:hover { opacity: 0.7; }
 .mylist-item .item-text { flex: 1; min-width: 0; }
-.mylist-item .remove-btn { display: inline-block; margin-left: auto; padding-left: 8px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; flex-shrink: 0; }
+.mylist-item .remove-btn { display: inline-block; margin-left: 6px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; }
 .mylist-item .remove-btn:hover { color: var(--color-text-primary); }
 .mylist-help { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 8px; line-height: 1.5; }
 .mylist-actions { display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
@@ -279,13 +286,13 @@ const DATA = {
     {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:45-11:05（IMAX）','10:25-13:30（中継）','14:10-16:49（中継）','16:10-18:30','18:25-20:45（IMAX）','20:25-22:45']},
     {area:'大井町', theater:'TOHO大井町', shows:['08:40-11:00','10:25-13:30（中継）','14:10-16:49（中継）','17:20-19:40','20:10-22:30']},
     {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:25-11:45','10:25-13:30（中継）','11:40-14:00（ScreenX）','14:10-16:49（中継）','16:55-19:15（ScreenX）','17:20-19:40','20:10-22:30']},
-    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:30-10:50','10:25-13:30（中継）','14:10-16:49（中継）','17:30-19:50','20:30-22:50']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:30-10:50','10:25-12:45','14:10-16:30','17:30-19:50','20:30-22:50']},
     {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','10:25-13:30（中継）','11:20-13:40（IMAX）','14:10-16:55（中継）','15:45-18:05','18:25-20:45','21:05-23:25（IMAX）']}
   ],
   '4/30': [
     {area:'有楽町', theater:'TOHO日比谷', shows:['09:25-12:30（中継）','13:10-15:49（中継）','13:40-16:00（IMAX）','15:40-18:00（Dolby）','18:45-21:05','19:00-21:20（IMAX）','21:40-24:00']},
     {area:'日本橋', theater:'TOHO日本橋', shows:['07:55-10:15','09:25-12:30（中継）','13:10-15:49（中継）','15:35-17:55','18:30-20:50','21:20-23:40']},
-    {area:'上野', theater:'TOHO上野', shows:['09:25-12:30（中継）','13:10-15:49（中継）','15:35-17:55','18:35-20:45','21:30-23:50']},
+    {area:'上野', theater:'TOHO上野', shows:['09:25-12:30（中継）','13:10-15:49（中継）','15:35-17:55','18:35-20:55','21:30-23:50']},
     {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['09:25-12:30（中継）','13:10-15:49（中継）','16:15-18:35','18:15-20:35','20:20-22:40']},
     {area:'池袋', theater:'TOHO池袋', shows:['08:30-10:50（ScreenX）','09:25-12:30（中継）','13:10-15:49（中継）','16:30-18:50','19:20-21:40','21:20-23:40（ScreenX）']},
     {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:00-10:20（ScreenX）','09:25-12:30（中継）','11:35-13:55（IMAX GT）','13:10-15:54（中継）','15:35-17:55','15:45-18:05（ScreenX）','18:15-20:35（Dolby）','20:00-22:20（IMAX GT）','20:40-23:00']},
@@ -298,63 +305,150 @@ const DATA = {
     {area:'品川', theater:'T・ジョイPRINCE品川', shows:['09:25-12:30（中継）','11:15-13:35（IMAX）','13:10-15:49（中継）','16:20-18:40','18:25-20:45（IMAX）','20:35-22:55']},
     {area:'大井町', theater:'TOHO大井町', shows:['08:40-11:00','09:25-12:30（中継）','13:10-15:49（中継）','16:20-18:40','19:10-21:30','20:40-23:00']},
     {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:25-12:30（中継）','11:40-14:00（ScreenX）','13:10-15:54（中継）','15:00-17:20','16:55-19:15（ScreenX）','17:25-19:45','20:10-22:30']},
-    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['09:25-12:30（中継）','13:10-15:49（中継）','14:30-16:50','17:00-19:20','19:55-22:15']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['09:25-11:45','13:10-15:30','14:30-16:50','17:00-19:20','19:55-22:15']},
     {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['09:25-12:30（中継）','11:20-13:40（IMAX）','13:10-15:55（中継）','15:50-18:10','18:35-20:55','21:05-23:25（IMAX）','21:20-23:40']}
   ],
   '5/1': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','12:50-15:10','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
     {area:'日本橋', theater:'TOHO日本橋', shows:['09:20-11:40','12:45-15:05','15:30-17:50','18:15-20:35','21:05-23:25']},
     {area:'上野', theater:'TOHO上野', shows:['09:05-11:25','11:55-14:15','13:50-16:10','16:05-18:25','18:50-21:10','21:35-23:55']},
-    {area:'池袋', theater:'TOHO池袋', shows:['08:10-10:30（ScreenX）','09:00-11:20','11:50-14:10','13:45-16:05（ScreenX）','14:45-17:05','17:40-20:00','20:30-22:50']},
-    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:00-10:20（ScreenX）','08:35-10:55','11:30-13:50（IMAX GT）','13:05-15:25','15:50-18:10','15:55-18:15（ScreenX）','18:25-20:45（Dolby）','20:00-22:20（IMAX GT）','20:20-22:40']},
-    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','15:10-17:30（IMAX）','17:25-19:45','19:00-21:20','21:50-24:10','23:30-25:50（IMAX）']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['20:10-22:30']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','15:50-18:10','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:45-17:05','17:40-20:00','20:30-22:50','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['21:20-23:40','24:05-26:25']},
     {area:'新宿', theater:'新宿ピカデリー', shows:['10:20-12:40','13:20-15:40','16:05-18:25','18:50-21:10','21:45-24:05']},
-    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:20-11:40','12:00-14:20（ScreenX）','14:20-16:40','15:00-17:20（Dolby）','17:20-19:40（ScreenX）','21:35-23:55','24:25-26:45']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','17:25-19:45','19:00-21:20','21:50-24:10','15:10-17:30（IMAX）','23:30-25:50（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:20-11:40','14:20-16:40','21:35-23:55','24:25-26:45','12:00-14:20（ScreenX）','17:20-19:40（ScreenX）','15:00-17:20（Dolby）']},
     {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
     {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:35-11:55','12:30-14:50','13:40-16:00','15:25-17:45','18:20-20:40','21:15-23:35']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['20:50-23:10']},
     {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','13:25-15:45','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
-    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:25-10:45','10:45-13:05（IMAX）','10:55-13:15','13:35-15:55','16:20-18:40','19:05-21:25','21:30-23:50（IMAX）']}
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['20:15-22:35','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:25-10:45','10:55-13:15','13:35-15:55','16:20-18:40','19:05-21:25','21:30-23:50（IMAX）']}
   ],
   '5/2': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','12:50-15:10','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
     {area:'日本橋', theater:'TOHO日本橋', shows:['10:20-12:40','13:10-15:30','16:00-18:20','18:45-21:05','21:35-23:55']},
     {area:'上野', theater:'TOHO上野', shows:['08:50-11:10','11:40-14:00','13:55-16:15','16:05-18:25','18:05-20:25','21:30-23:50']},
-    {area:'池袋', theater:'TOHO池袋', shows:['08:10-10:30（ScreenX）','09:00-11:20','11:50-14:10','13:45-16:05（ScreenX）','14:40-17:00','17:30-19:50','20:20-22:40']},
-    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','15:10-17:30（IMAX）','17:25-19:45','19:00-21:20','21:50-24:10','23:30-25:50（IMAX）']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['08:50-11:10','11:25-13:45','15:25-17:45','18:00-20:20','20:35-22:55']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','16:15-18:35','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:40-17:00','17:30-19:50','20:20-22:40','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['10:30-12:50','13:10-15:30','15:40-18:00','17:30-19:50','20:50-23:10','22:50-25:10']},
     {area:'新宿', theater:'新宿ピカデリー', shows:['10:20-12:40','13:45-16:05','16:10-18:30','18:25-20:45','21:30-23:50']},
-    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:05-13:25（ScreenX）','11:50-14:10','14:45-17:05（Dolby）','16:50-19:10','18:25-20:45（ScreenX）','20:05-22:25（Dolby）']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','17:25-19:45','19:00-21:20','21:50-24:10','15:10-17:30（IMAX）','23:30-25:50（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:50-14:10','16:50-19:10','11:05-13:25（ScreenX）','18:25-20:45（ScreenX）','14:45-17:05（Dolby）','20:05-22:25（Dolby）']},
     {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
     {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:35-11:55','12:30-14:50','15:25-17:45','17:10-19:30','18:20-20:40','21:15-23:35']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:50-11:10','13:00-15:20','16:05-18:25','18:10-20:30','10:20-12:40（IMAX）','20:55-23:15（IMAX）']},
     {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','13:25-15:45','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
-    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','10:45-13:05（IMAX）','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','21:30-23:50（IMAX）']}
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:15-11:35','12:00-14:20','14:45-17:05','17:30-19:50','20:15-22:35','14:05-16:25（ScreenX）','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:20-10:40','09:30-11:50','11:05-13:25','13:50-16:10','14:50-17:10','17:00-19:20','20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','10:45-13:05（IMAX）','21:30-23:50（IMAX）']}
   ],
   '5/3': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','13:00-15:20','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
     {area:'日本橋', theater:'TOHO日本橋', shows:['10:20-12:40','13:10-15:30','16:00-18:20','18:45-21:05','21:35-23:55']},
     {area:'上野', theater:'TOHO上野', shows:['09:05-11:25','11:55-14:15','13:50-16:10','16:05-18:25','18:50-21:10','21:35-23:55']},
-    {area:'池袋', theater:'TOHO池袋', shows:['08:10-10:30（ScreenX）','09:00-11:20','11:50-14:10','13:45-16:05（ScreenX）','14:45-17:05','17:40-20:00','20:30-22:50']},
-    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','15:10-17:30（IMAX）','16:30-18:50','19:50-22:10','21:45-24:05','23:30-25:50（IMAX）']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['08:50-11:10','11:25-13:45','15:25-17:45','18:00-20:20','20:35-22:55']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','15:50-18:10','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:45-17:05','17:40-20:00','20:30-22:50','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['10:30-12:50','13:10-15:30','15:30-17:50','18:10-20:30','20:50-23:10','23:35-25:55']},
     {area:'新宿', theater:'新宿ピカデリー', shows:['10:50-13:10','13:35-15:55','16:20-18:40','19:10-21:30','21:25-23:45']},
-    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:05-13:25（ScreenX）','11:50-14:10','14:45-17:05（Dolby）','16:50-19:10','18:25-20:45（ScreenX）','23:25-25:45']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','16:30-18:50','19:50-22:10','21:45-24:05','15:10-17:30（IMAX）','23:30-25:50（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:50-14:10','16:50-19:10','11:05-13:25（ScreenX）','18:25-20:45（ScreenX）','14:45-17:05（Dolby）']},
     {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
     {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:35-11:55','12:30-14:50','15:25-17:45','17:10-19:30','18:20-20:40','21:15-23:35']},
-    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','13:25-15:45','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
-    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','10:45-13:05（IMAX）','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','21:30-23:50（IMAX）']}
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:50-11:10','11:30-13:50','13:00-15:20','16:05-18:25','18:10-20:30','10:20-12:40（IMAX）','20:55-23:15（IMAX）']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:15-11:35','12:00-14:20','17:30-19:50','20:15-22:35','14:05-16:25（ScreenX）','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:20-10:40','09:30-11:50','11:05-13:25','13:50-16:10','14:50-17:10','17:00-19:20','20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','10:45-13:05（IMAX）','21:30-23:50（IMAX）']}
   ],
   '5/4': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','13:00-15:20','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
     {area:'日本橋', theater:'TOHO日本橋', shows:['10:20-12:40','13:10-15:30','16:00-18:20','18:45-21:05','21:35-23:55']},
-    {area:'上野', theater:'TOHO上野', shows:['08:50-11:10','10:45-13:05','12:40-15:00','15:30-17:50','18:45-21:05','21:05-23:25']},
-    {area:'池袋', theater:'TOHO池袋', shows:['08:10-10:30（ScreenX）','09:00-11:20','11:50-14:10','13:45-16:05（ScreenX）','14:45-17:05','17:40-20:00','20:30-22:50']},
-    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','15:10-17:30（IMAX）','16:30-18:50','19:50-22:10','21:45-24:05','23:30-25:50（IMAX）']},
+    {area:'上野', theater:'TOHO上野', shows:['08:40-11:00','11:10-13:30','12:40-15:00','15:30-17:50','18:45-21:05','21:05-23:25']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['08:50-11:10','11:25-13:45','15:25-17:45','18:00-20:20','20:35-22:55']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','15:50-18:10','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:45-17:05','17:40-20:00','20:30-22:50','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['10:30-12:50','13:10-15:30','15:30-17:50','18:10-20:30','20:50-23:10','23:35-25:55']},
     {area:'新宿', theater:'新宿ピカデリー', shows:['08:20-10:40','10:25-12:45','13:50-16:10','16:30-18:50','21:05-23:25']},
-    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:05-13:25（ScreenX）','11:50-14:10','16:50-19:10','18:00-20:20','18:25-20:45（ScreenX）','23:25-25:45']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','16:30-18:50','19:50-22:10','21:45-24:05','15:10-17:30（IMAX）','23:30-25:50（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:50-14:10','16:50-19:10','18:00-20:20','23:25-25:45','11:05-13:25（ScreenX）','18:25-20:45（ScreenX）']},
     {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
     {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:35-11:55','12:30-14:50','15:25-17:45','17:10-19:30','18:20-20:40','21:15-23:35']},
-    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','13:25-15:45','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
-    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','10:45-13:05（IMAX）','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','21:30-23:50（IMAX）']}
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:50-11:10','11:30-13:50','13:00-15:20','16:05-18:25','18:10-20:30','10:20-12:40（IMAX）','20:55-23:15（IMAX）']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:15-11:35','12:00-14:20','14:45-17:05','17:30-19:50','20:15-22:35','14:05-16:25（ScreenX）','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:20-10:40','09:30-11:50','11:05-13:25','13:50-16:10','14:50-17:10','17:00-19:20','20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','10:45-13:05（IMAX）','21:30-23:50（IMAX）']}
   ],
-  '5/5': [],
-  '5/6': []
+  '5/5': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','13:00-15:20','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
+    {area:'日本橋', theater:'TOHO日本橋', shows:['10:20-12:40','13:10-15:30','16:00-18:20','18:45-21:05','21:35-23:55']},
+    {area:'上野', theater:'TOHO上野', shows:['08:35-10:55','10:45-13:05','12:40-15:00','15:30-17:50','18:45-21:05','21:05-23:25']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['08:50-11:10','11:25-13:45','15:25-17:45','18:00-20:20','20:35-22:55']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','15:50-18:10','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:45-17:05','17:40-20:00','20:30-22:50','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['10:30-12:50','13:10-15:30','15:30-17:50','18:10-20:30','20:50-23:10','23:35-25:55']},
+    {area:'新宿', theater:'新宿ピカデリー', shows:['11:30-13:50','13:20-15:40','16:05-18:25','18:50-21:10','21:25-23:45']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','13:30-15:50','16:30-18:50','19:50-22:10','21:45-24:05','15:10-17:30（IMAX）','23:30-25:50（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:50-14:10','16:50-19:10','23:45-26:05','11:05-13:25（ScreenX）','18:25-20:45（ScreenX）','14:45-17:05（Dolby）']},
+    {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
+    {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['08:50-11:10','11:45-14:05','13:25-15:45','14:15-16:35','17:50-20:10','20:45-23:05']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:50-11:10','11:30-13:50','13:00-15:20','16:05-18:25','18:10-20:30','10:20-12:40（IMAX）','20:55-23:15（IMAX）']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:15-11:35','12:00-14:20','14:45-17:05','17:30-19:50','20:15-22:35','14:05-16:25（ScreenX）','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:20-10:40','09:30-11:50','11:05-13:25','13:50-16:10','14:50-17:10','17:00-19:20','20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','10:45-13:05（IMAX）','21:30-23:50（IMAX）']}
+  ],
+  '5/6': [
+    {area:'有楽町', theater:'TOHO日比谷', shows:['10:00-12:20','13:00-15:20','15:40-18:00','18:40-21:00','21:30-23:50','08:40-11:00（IMAX）','16:35-18:55（IMAX）']},
+    {area:'日本橋', theater:'TOHO日本橋', shows:['10:20-12:40','13:10-15:30','16:00-18:20','18:45-21:05','21:35-23:55']},
+    {area:'上野', theater:'TOHO上野', shows:['08:40-11:00','11:10-13:30','12:40-15:00','15:30-17:50','18:45-21:05','21:05-23:25']},
+    {area:'池袋', theater:'池袋HUMAXシネマズ', shows:['08:50-11:10','11:25-13:45','15:25-17:45','18:00-20:20','20:35-22:55']},
+    {area:'池袋', theater:'グランドシネマサンシャイン池袋', shows:['08:35-10:55','13:05-15:25','15:50-18:10','20:20-22:40','11:30-13:50（IMAX GT）','20:00-22:20（IMAX GT）','08:00-10:20（ScreenX）','15:55-18:15（ScreenX）','18:25-20:45（Dolby）']},
+    {area:'池袋', theater:'TOHO池袋', shows:['09:00-11:20','11:50-14:10','14:45-17:05','17:40-20:00','20:30-22:50','08:10-10:30（ScreenX）','13:45-16:05（ScreenX）']},
+    {area:'新宿', theater:'新宿バルト9', shows:['10:30-12:50','13:10-15:30','15:30-17:50','18:10-20:30','20:50-23:10','23:35-25:55']},
+    {area:'新宿', theater:'新宿ピカデリー', shows:['10:45-13:05','13:30-15:50','16:20-18:40','19:10-21:30','21:25-23:45']},
+    {area:'新宿', theater:'TOHO新宿', shows:['09:00-11:20','11:50-14:10','14:10-16:30','17:20-19:40','19:15-21:35','15:05-17:25（IMAX）','20:35-22:55（IMAX）']},
+    {area:'新宿', theater:'109シネマズプレミアム新宿', shows:['09:05-11:25','11:50-14:10','16:55-19:15','11:05-13:25（ScreenX）','18:25-20:45（ScreenX）','14:45-17:05（Dolby）','20:05-22:25（Dolby）']},
+    {area:'渋谷', theater:'TOHO渋谷', shows:['08:20-10:40','10:15-12:35','15:30-17:50','18:20-20:40','21:00-23:20']},
+    {area:'六本木', theater:'TOHO六本木ヒルズ', shows:['09:35-11:55','12:30-14:50','15:25-17:45','17:10-19:30','18:20-20:40','21:15-23:35']},
+    {area:'品川', theater:'T・ジョイPRINCE品川', shows:['08:50-11:10','11:30-13:50','13:00-15:20','16:05-18:25','18:10-20:30','10:20-12:40（IMAX）','20:55-23:15（IMAX）']},
+    {area:'大井町', theater:'TOHO大井町', shows:['08:50-11:10','11:40-14:00','14:30-16:50','17:20-19:40','20:10-22:30','23:00-25:20']},
+    {area:'お台場', theater:'ユナイテッド・シネマ アクアシティお台場', shows:['09:15-11:35','12:00-14:20','14:45-17:05','17:30-19:50','20:15-22:35','14:05-16:25（ScreenX）','19:30-21:50（ScreenX）']},
+    {area:'豊洲', theater:'ユナイテッド・シネマ豊洲', shows:['08:20-10:40','09:30-11:50','11:05-13:25','13:50-16:10','14:50-17:10','17:00-19:20','20:15-22:35']},
+    {area:'二子玉川', theater:'109シネマズ二子玉川', shows:['08:20-10:40','11:15-13:35','13:40-16:00','16:15-18:35','19:00-21:20','10:45-13:05（IMAX）','21:30-23:50（IMAX）']}
+  ]
 };
-/* (JavaScript部分は既存と全く同じロジックのため省略) */
-let currentDay = (DAYS.find(d => DATA[d.key] && DATA[d.key].length > 0) || DAYS[0]).key;
+
+// 初期表示タブの選択ロジック:
+// 1) 今日のタブにデータがあれば → 今日
+// 2) 今日にデータがなければ → 今日以降でデータがある最初の日
+// 3) それもなければ → DAYS の最初の日
+let currentDay = (function pickInitialDay() {
+  const todayKey = (function() {
+    const now = new Date();
+    return `${now.getMonth() + 1}/${now.getDate()}`;
+  })();
+  // 今日にデータがあるか
+  if (DATA[todayKey] && DATA[todayKey].length > 0) return todayKey;
+  // 今日以降でデータがある最初の日（タブの順序ベース）
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const baseYear = (typeof CALENDAR_BASE_YEAR !== 'undefined') ? CALENDAR_BASE_YEAR : new Date().getFullYear();
+  const futureWithData = DAYS.find(d => {
+    const [m, dd] = d.key.split('/').map(Number);
+    const dayDate = new Date(baseYear, m - 1, dd);
+    return dayDate >= todayDate && DATA[d.key] && DATA[d.key].length > 0;
+  });
+  if (futureWithData) return futureWithData.key;
+  // 最後の砦: 何でもいいからデータがある日 / なければ DAYS[0]
+  const anyWithData = DAYS.find(d => DATA[d.key] && DATA[d.key].length > 0);
+  return (anyWithData || DAYS[0]).key;
+})();
 let activeAreas = new Set(AREA_ORDER);
 let isTextMode = false;
 let mylistOnly = false;
@@ -383,7 +477,6 @@ const AREA_W = 64;
 const THEATER_W = 196;
 const HOUR_W = 48;
 
-// 行高: 通常行=32px、劇場の1行目=42px
 const ROW_H_NORMAL = 32;
 const ROW_H_FIRST = 42;
 const BAR_H = 16;
@@ -414,7 +507,6 @@ function stageBgHtml() {
   }).join('');
 }
 
-// 現在表示中の日付の選択回から、2時間以上の「空き時間」を計算してハイライト用divを返す
 function freeSlotBgHtml() {
   const dayData = DATA[currentDay] || [];
   const selectedShows = [];
@@ -427,11 +519,8 @@ function freeSlotBgHtml() {
       }
     });
   });
-  // 2件未満なら空き時間の概念がない
   if (selectedShows.length < 2) return '';
-  // 開始時刻順にソート
   selectedShows.sort((a, b) => toMin(a.start) - toMin(b.start));
-  // 隣接する回の隙間を計算（2時間以上=120分以上）
   const FREE_THRESHOLD_MIN = 120;
   const ranges = [];
   for (let i = 0; i < selectedShows.length - 1; i++) {
@@ -451,10 +540,8 @@ function freeSlotBgHtml() {
   }).join('');
 }
 
-// 現在表示中の日付の選択回をタイムライン上に表示する専用行
 function buildMylistRowHtml(chartWidth, totalHours) {
   const dayData = DATA[currentDay] || [];
-  // 現在の日付の選択回を集める
   const selectedShows = [];
   dayData.forEach(theater => {
     theater.shows.forEach(s => {
@@ -505,7 +592,6 @@ function buildMylistRowHtml(chartWidth, totalHours) {
 function render() {
   const chartWrap = document.getElementById('chart-wrap');
   const textOutput = document.getElementById('text-output');
-
   if (isTextMode) {
     chartWrap.style.display = 'none';
     textOutput.style.display = 'block';
@@ -514,34 +600,10 @@ function render() {
   }
   chartWrap.style.display = '';
   textOutput.style.display = 'none';
-
   const dayData = DATA[currentDay] || [];
-  if (dayData.length === 0) {
-    const dayConfig = getDay(currentDay);
-    const label = dayConfig ? dayConfig.label : currentDay;
-    document.getElementById('chart').innerHTML =
-      `<div class="empty-day"><div class="empty-day-icon">📅</div>` +
-      `<div class="empty-day-date">${label}</div>` +
-      `<div class="empty-day-msg">このスケジュールは準備中です。<br>公開までもう少しお待ちください。</div></div>`;
-    return;
-  }
-
-  const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
-  let theaters = sorted.filter(r => activeAreas.has(r.area));
-  // マイリストのみモードでは、選択回がある劇場のみ表示
-  if (mylistOnly) {
-    theaters = theaters.filter(theater => {
-      return theater.shows.some(s => {
-        const p = parseShow(s);
-        if (!p) return false;
-        return mylist.has(makeShowId(currentDay, theater.theater, p.start, p.end, p.type));
-      });
-    });
-  }
   const chart = document.getElementById('chart');
   const totalHours = END_HOUR - START_HOUR;
   const chartWidth = AREA_W + THEATER_W + totalHours * HOUR_W;
-
   let html = '';
   html += `<div style="display: flex; min-width: ${chartWidth}px; border-bottom: 0.5px solid var(--color-border-tertiary); background: #F7F7F7;">`;
   html += `<div class="header-cell" style="width: ${AREA_W}px; flex-shrink: 0; border-right: 0.5px solid var(--color-border-tertiary);">地域</div>`;
@@ -553,481 +615,183 @@ function render() {
     html += `<div class="hour-tick">${label}</div>`;
   }
   html += `</div></div></div>`;
-
-  // マイリスト行（選択中の回がある場合のみ表示、チャート最上部）
   html += buildMylistRowHtml(chartWidth, totalHours);
-
+  const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
+  let theaters = sorted.filter(r => activeAreas.has(r.area));
+  if (mylistOnly) {
+    theaters = theaters.filter(theater => theater.shows.some(s => {
+      const p = parseShow(s);
+      return p && mylist.has(makeShowId(currentDay, theater.theater, p.start, p.end, p.type));
+    }));
+  }
   let lastArea = null;
-
   theaters.forEach(theater => {
     const rows = buildTheaterRows(theater);
     if (rows.length === 0) return;
-
     const isFirstInArea = theater.area !== lastArea;
-    const showAreaLabel = isFirstInArea;
-
     rows.forEach((row, rIdx) => {
       const isFirstRow = rIdx === 0;
       const rowH = isFirstRow ? ROW_H_FIRST : ROW_H_NORMAL;
-
-      let borderClass = '';
-      if (isFirstRow) {
-        if (isFirstInArea && lastArea !== null) {
-          borderClass = 'area-divider';
-        } else if (!isFirstInArea) {
-          borderClass = 'theater-divider';
-        }
-      } else {
-        borderClass = 'row-line';
-      }
-
+      let borderClass = isFirstRow ? (isFirstInArea && lastArea !== null ? 'area-divider' : (!isFirstInArea ? 'theater-divider' : '')) : 'row-line';
       html += `<div class="${borderClass}" style="display: flex; min-width: ${chartWidth}px; height: ${rowH}px;">`;
-      html += `<div class="row-area-cell" style="height: ${rowH}px;">`;
-      if (showAreaLabel && isFirstRow) {
-        html += `${theater.area}`;
-      }
-      html += `</div>`;
-      html += `<div class="row-theater-cell" style="height: ${rowH}px;">`;
-      if (isFirstRow) {
-        html += `<span class="row-theater">${theater.theater}</span>`;
-      } else {
-        html += `<span class="row-theater"></span>`;
-      }
-      html += `<span class="kind-badge">${row.kind}</span>`;
-      html += `</div>`;
+      html += `<div class="row-area-cell" style="height: ${rowH}px;">${isFirstInArea && isFirstRow ? theater.area : ''}</div>`;
+      html += `<div class="row-theater-cell" style="height: ${rowH}px;"><span class="row-theater">${isFirstRow ? theater.theater : ''}</span><span class="kind-badge">${row.kind}</span></div>`;
       html += `<div class="bar-area" style="height: ${rowH}px;">`;
-      html += stageBgHtml();
-      html += freeSlotBgHtml();
-      if (isFirstRow) {
-        html += `<div class="theater-watermark">${theater.theater}</div>`;
-      }
-      for (let h = 1; h < totalHours; h++) {
-        html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
-      }
-      // 1行目: ラベル(上8px+padding4px=12px)の下にバー、それ以外は中央
+      html += stageBgHtml() + freeSlotBgHtml();
+      if (isFirstRow) html += `<div class="theater-watermark">${theater.theater}</div>`;
+      for (let h = 1; h < totalHours; h++) html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
       const barTop = isFirstRow ? 18 : Math.round((rowH - BAR_H) / 2);
       row.shows.forEach(p => {
         const showId = makeShowId(currentDay, theater.theater, p.start, p.end, p.type);
-        // マイリストのみモードでは、選択されてない回はスキップ
         if (mylistOnly && !mylist.has(showId)) return;
-        const sMin = toMin(p.start) - START_HOUR * 60;
-        const eMin = toMin(p.end) - START_HOUR * 60;
-        const left = (sMin / 60) * HOUR_W;
-        const width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
-        const color = COLORS[p.type] || COLORS['通常'];
-        const suffix = p.type === '通常' ? '' : `（${p.type}）`;
-        const labelText = `${p.start}${suffix}`;
-        const tipText = `${theater.theater}\n${p.start}-${p.end}${suffix}`;
-        const isSelected = mylist.has(showId);
-        const selectedClass = isSelected ? ' selected' : '';
-        html += `<div class="bar${selectedClass}" data-show-id="${showId.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${color};">`;
-        html += `<span class="bar-label">${labelText}</span>`;
-        html += `</div>`;
+        const sMin = toMin(p.start) - START_HOUR * 60, eMin = toMin(p.end) - START_HOUR * 60;
+        const left = (sMin / 60) * HOUR_W, width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
+        const tipText = `${theater.theater}\n${p.start}-${p.end}${p.type === '通常' ? '' : `（${p.type}）`}`;
+        html += `<div class="bar${mylist.has(showId) ? ' selected' : ''}" data-show-id="${showId.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${COLORS[p.type] || COLORS['通常']};"><span class="bar-label">${p.start}${p.type === '通常' ? '' : `（${p.type}）`}</span></div>`;
       });
       html += `</div></div>`;
     });
     lastArea = theater.area;
   });
-
-  if (theaters.length === 0) {
-    html += `<div style="padding: 2rem; text-align: center; color: var(--color-text-tertiary); font-size: 13px;">表示する劇場がありません。</div>`;
-  }
-
-  chart.innerHTML = html;
-
+  chart.innerHTML = html || `<div style="padding: 2rem; text-align: center; color: var(--color-text-tertiary); font-size: 13px;">表示する劇場がありません。</div>`;
   const tip = document.getElementById('tip');
   chart.querySelectorAll('.bar').forEach(bar => {
-    bar.addEventListener('mouseenter', () => {
-      tip.textContent = bar.dataset.tip;
-      tip.style.whiteSpace = 'pre-line';
-      tip.style.display = 'block';
-    });
-    bar.addEventListener('mousemove', e => {
-      tip.style.left = (e.pageX + 12) + 'px';
-      tip.style.top = (e.pageY + 12) + 'px';
-    });
+    bar.addEventListener('mouseenter', () => { tip.textContent = bar.dataset.tip; tip.style.whiteSpace = 'pre-line'; tip.style.display = 'block'; });
+    bar.addEventListener('mousemove', e => { tip.style.left = (e.pageX + 12) + 'px'; tip.style.top = (e.pageY + 12) + 'px'; });
     bar.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
-    bar.addEventListener('click', () => {
-      const id = bar.dataset.showId;
-      if (!id) return;
-      if (mylist.has(id)) {
-        mylist.delete(id);
-        bar.classList.remove('selected');
-      } else {
-        mylist.add(id);
-        bar.classList.add('selected');
-      }
-      saveMylist(mylist);
-      renderMylist();
-      // チャート最上部のマイタイムライン行と空き時間ハイライトを更新するため再描画
-      render();
-    });
+    bar.addEventListener('click', () => { const id = bar.dataset.showId; if (!id) return; if (mylist.has(id)) mylist.delete(id); else mylist.add(id); saveMylist(mylist); renderMylist(); render(); fixScrollAfterShrink(); });
   });
 }
 
 function renderText() {
   const dayData = DATA[currentDay] || [];
-  const dayConfig = getDay(currentDay);
-  const dayLabel = dayConfig ? dayConfig.label : currentDay;
-
-  if (dayData.length === 0) {
-    document.getElementById('text-output').textContent =
-      `${dayLabel}\n\nこのスケジュールは準備中です。\n公開までもう少しお待ちください。\n`;
-    return;
-  }
-
   const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
   const theaters = sorted.filter(r => activeAreas.has(r.area));
-
-  let text = `${dayLabel}\n\n`;
-
-  if (theaters.length === 0) {
-    text += '表示する劇場がありません。\n';
-    document.getElementById('text-output').textContent = text;
-    return;
-  }
-
+  let text = `${getDay(currentDay).label}\n\n`;
   let lastArea = null;
   theaters.forEach(theater => {
-    if (theater.area !== lastArea) {
-      if (lastArea !== null) text += '\n';
-      text += `【${theater.area}】\n`;
-      lastArea = theater.area;
-    }
+    if (theater.area !== lastArea) { text += `【${theater.area}】\n`; lastArea = theater.area; }
     text += `${theater.theater}\n`;
-
-    const parsedShows = theater.shows
-      .map(parseShow)
-      .filter(p => p)
-      .sort((a, b) => toMin(a.start) - toMin(b.start));
-
-    parsedShows.forEach(p => {
-      const showId = makeShowId(currentDay, theater.theater, p.start, p.end, p.type);
-      const star = mylist.has(showId) ? '★ ' : '  ';
-      const suffix = p.type === '通常' ? '' : `（${p.type}）`;
-      text += `${star}${p.start}-${p.end}${suffix}\n`;
+    theater.shows.map(parseShow).filter(p => p).sort((a, b) => toMin(a.start) - toMin(b.start)).forEach(p => {
+      text += `${mylist.has(makeShowId(currentDay, theater.theater, p.start, p.end, p.type)) ? '★ ' : '  '}${p.start}-${p.end}${p.type === '通常' ? '' : `（${p.type}）`}\n`;
     });
     text += '\n';
   });
-
   document.getElementById('text-output').textContent = text;
 }
 
-// === マイリスト描画 ===
 function buildMylistData() {
-  // 選択ID群を日付ごとにグループ化し、データから詳細を引く
-  const result = {};
+  const res = {};
   DAYS.forEach(day => {
-    const dayData = DATA[day.key] || [];
-    dayData.forEach(theater => {
-      theater.shows.forEach(s => {
-        const p = parseShow(s);
-        if (!p) return;
-        const id = makeShowId(day.key, theater.theater, p.start, p.end, p.type);
-        if (!mylist.has(id)) return;
-        if (!result[day.key]) result[day.key] = [];
-        result[day.key].push({
-          area: theater.area,
-          theater: theater.theater,
-          start: p.start,
-          end: p.end,
-          type: p.type,
-          id
-        });
-      });
-    });
+    (DATA[day.key] || []).forEach(theater => theater.shows.forEach(s => {
+      const p = parseShow(s), id = makeShowId(day.key, theater.theater, p.start, p.end, p.type);
+      if (mylist.has(id)) { if (!res[day.key]) res[day.key] = []; res[day.key].push({ ...theater, ...p, id }); }
+    }));
   });
-  // 日付の表示順に
-  const ordered = [];
-  DAYS.forEach(d => {
-    if (result[d.key]) {
-      // 開始時刻順にソート
-      result[d.key].sort((a, b) => toMin(a.start) - toMin(b.start));
-      ordered.push({ key: d.key, label: d.label, items: result[d.key] });
-    }
-  });
-  return ordered;
+  return DAYS.filter(d => res[d.key]).map(d => ({ ...d, items: res[d.key].sort((a, b) => toMin(a.start) - toMin(b.start)) }));
 }
 
 function renderMylist() {
-  const section = document.getElementById('mylist-section');
-  const content = document.getElementById('mylist-content');
-  const countEl = document.getElementById('mylist-count');
-  const onlyBtn = document.getElementById('mylist-only');
-
-  const groups = buildMylistData();
-  const totalCount = groups.reduce((acc, g) => acc + g.items.length, 0);
-
-  if (totalCount === 0) {
-    section.style.display = 'none';
-    // 0件になったらマイリストのみモードも解除
-    if (mylistOnly) {
-      mylistOnly = false;
-      render();
-    }
-    return;
-  }
-
+  const section = document.getElementById('mylist-section'), content = document.getElementById('mylist-content');
+  const groups = buildMylistData(), total = groups.reduce((a, g) => a + g.items.length, 0);
+  if (total === 0) { section.style.display = 'none'; if (mylistOnly) { mylistOnly = false; render(); } return; }
   section.style.display = '';
-  countEl.textContent = `(${totalCount}件)`;
-
-  let html = '';
-  groups.forEach(g => {
-    html += `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>`;
-    g.items.forEach(it => {
-      const suffix = it.type === '通常' ? '' : `（${escapeHtml(it.type)}）`;
-      html += `<div class="mylist-item"><span class="cal-btn" data-id="${escapeHtml(it.id)}" title="Googleカレンダーに登録" role="button" tabindex="0">📅</span><span class="item-text">${escapeHtml(it.start)}-${escapeHtml(it.end)} ${escapeHtml(it.theater)}${suffix}</span><span class="remove-btn" data-id="${escapeHtml(it.id)}" title="削除" role="button" tabindex="0">×</span></div>`;
-    });
-  });
-  content.innerHTML = html;
-
-  // マイリストのみボタンの状態（テキストモード時はチャート絞り込みが無関係なので非表示）
-  if (onlyBtn) {
-    onlyBtn.textContent = mylistOnly ? '全ての劇場を表示' : 'マイリストのみ表示';
-    onlyBtn.classList.toggle('mylist-only-active', mylistOnly);
-    const onlySlash = onlyBtn.previousElementSibling;
-    if (isTextMode) {
-      onlyBtn.style.display = 'none';
-      if (onlySlash && onlySlash.classList.contains('area-slash')) onlySlash.style.display = 'none';
-    } else {
-      onlyBtn.style.display = '';
-      if (onlySlash && onlySlash.classList.contains('area-slash')) onlySlash.style.display = '';
-    }
-  }
-
-  // 個別削除ボタン
-  content.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      if (!id) return;
-      mylist.delete(id);
-      saveMylist(mylist);
-      renderMylist();
-      render();
-    });
-  });
-  // 個別カレンダー登録ボタン
-  content.querySelectorAll('.cal-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      if (!id) return;
-      const item = findMylistItemById(id);
-      if (!item) return;
-      window.open(buildGCalUrl(item), '_blank', 'noopener,noreferrer');
-    });
-  });
+  document.getElementById('mylist-count').textContent = `(${total}件)`;
+  content.innerHTML = groups.map(g => `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>` + g.items.map(it => `<div class="mylist-item"><span class="cal-btn" data-id="${escapeHtml(it.id)}">📅</span><span class="item-text">${it.start}-${it.end} ${it.theater}${it.type === '通常' ? '' : `（${it.type}）`}<span class="remove-btn" data-id="${escapeHtml(it.id)}">×</span></span></div>`).join('')).join('');
+  content.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', () => { mylist.delete(btn.dataset.id); saveMylist(mylist); renderMylist(); render(); fixScrollAfterShrink(); }));
+  content.querySelectorAll('.cal-btn').forEach(btn => btn.addEventListener('click', () => { 
+    const item = buildMylistData().flatMap(g => g.items).find(i => i.id === btn.dataset.id);
+    if (item) window.open(buildGCalUrl({ day: groups.find(g => g.items.includes(item)).key, ...item }), '_blank');
+  }));
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function buildMylistText() {
-  const groups = buildMylistData();
-  if (groups.length === 0) return '';
-  let text = 'SAKAMOTO DAYS 観たい回リスト\n\n';
-  groups.forEach(g => {
-    text += `【${g.label}】\n`;
-    g.items.forEach(it => {
-      const suffix = it.type === '通常' ? '' : `（${it.type}）`;
-      text += `・${it.start}-${it.end} ${it.theater}${suffix}\n`;
-    });
-    text += '\n';
-  });
-  return text.trimEnd() + '\n';
-}
-
-function copyMylist() {
-  const text = buildMylistText();
-  if (!text) return;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      flashMylistButton('mylist-copy', 'コピーしました');
-    }).catch(() => {
-      fallbackCopy(text);
-    });
-  } else {
-    fallbackCopy(text);
-  }
-}
-function fallbackCopy(text) {
-  // フォールバック: テキストエリアを使う
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); flashMylistButton('mylist-copy', 'コピーしました'); }
-  catch (e) { alert('コピーに失敗しました。手動でコピーしてください:\n\n' + text); }
-  document.body.removeChild(ta);
-}
-function flashMylistButton(id, msg) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-  const original = btn.textContent;
-  btn.textContent = msg;
-  setTimeout(() => { btn.textContent = original; }, 1500);
-}
-
-// === カレンダー登録（Google Calendar） ===
-const CALENDAR_BASE_YEAR = 2026; // データの基準年
-const SITE_URL = 'https://kuroame216.github.io/sakamotodays-opening/';
-
-// "4/29" + "10:25" を Date オブジェクトに変換
-// 翌日0時以降の表記（例: 25:25 = 翌日1:25）にも対応
-function buildDateTime(dayKey, timeStr) {
-  const [m, d] = dayKey.split('/').map(Number);
-  let [hh, mm] = timeStr.split(':').map(Number);
-  let dayOffset = 0;
-  if (hh >= 24) { hh -= 24; dayOffset = 1; }
-  const dt = new Date(CALENDAR_BASE_YEAR, m - 1, d + dayOffset, hh, mm, 0);
-  return dt;
-}
-
-// Google Calendar の dates パラメータ用フォーマット (YYYYMMDDTHHMMSS、ローカル時刻)
-function fmtGCalLocal(dt) {
-  const pad = n => String(n).padStart(2, '0');
-  return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-}
-
-// 各劇場の住所（Googleマップで位置確定するために使用）
-// ※ 正確性は要検証。実機で位置がズレている劇場があれば修正してください。
-const THEATER_ADDRESSES = {
-  'TOHO日比谷':                    '東京都千代田区有楽町1-1-2 東京ミッドタウン日比谷',
-  'TOHO日本橋':                    '東京都中央区日本橋室町1-4-1 コレド室町2',
-  'TOHO上野':                      '東京都台東区上野3-24-6 上野フロンティアタワー',
-  '池袋HUMAXシネマズ':              '東京都豊島区東池袋1-22-10 ヒューマックスパビリオン池袋',
-  'TOHO池袋':                      '東京都豊島区東池袋1-30-3',
-  'グランドシネマサンシャイン池袋':  '東京都豊島区東池袋1-30-3 サンシャインシティ',
-  'TOHO新宿':                      '東京都新宿区歌舞伎町1-19-1',
-  '新宿バルト9':                    '東京都新宿区新宿3-1-26 新宿三丁目イーストビル',
-  '新宿ピカデリー':                 '東京都新宿区新宿3-15-15',
-  '109シネマズプレミアム新宿':      '東京都新宿区歌舞伎町1-29-1 東急歌舞伎町タワー',
-  'TOHO渋谷':                      '東京都渋谷区道玄坂2-6-17',
-  'TOHO六本木ヒルズ':               '東京都港区六本木6-10-2 六本木ヒルズ',
-  'T・ジョイPRINCE品川':            '東京都港区高輪4-10-30 グランドプリンスホテル新高輪',
-  'TOHO大井町':                    '東京都品川区大井1-3-6 阪急大井町ガーデン',
-  'ユナイテッド・シネマ アクアシティお台場': '東京都港区台場1-7-1 アクアシティお台場',
-  'ユナイテッド・シネマ豊洲':       '東京都江東区豊洲2-4-9 アーバンドック ららぽーと豊洲',
-  '109シネマズ二子玉川':            '東京都世田谷区玉川1-14-1 二子玉川ライズS.C.'
-};
-
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function buildGCalUrl(item) {
-  // item: { day, theater, start, end, type }
-  const startDt = buildDateTime(item.day, item.start);
-  const endDt = buildDateTime(item.day, item.end);
-  const title = `SAKAMOTO DAYS @ ${item.theater}`;
-  const typeText = item.type !== '通常' ? `上映種別: ${item.type}\n` : '';
-  const details = `${typeText}※ 情報は調査時点のものです。最新は劇場公式サイトをご確認ください。\n${SITE_URL}`;
-  // 住所がわかる劇場は「劇場名, 住所」の形式で渡す（Googleマップに位置を伝える）
-  const address = THEATER_ADDRESSES[item.theater];
-  const location = address ? `${item.theater}, ${address}` : item.theater;
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: title,
-    dates: `${fmtGCalLocal(startDt)}/${fmtGCalLocal(endDt)}`,
-    details: details,
-    location: location,
-    ctz: 'Asia/Tokyo'
-  });
+  const startDt = buildDateTime(item.day, item.start), endDt = buildDateTime(item.day, item.end);
+  const address = THEATER_ADDRESSES[item.theater], loc = address ? `${item.theater}, ${address}` : item.theater;
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: `SAKAMOTO DAYS @ ${item.theater}`, dates: `${fmtGCalLocal(startDt)}/${fmtGCalLocal(endDt)}`, details: `上映種別: ${item.type}\nhttps://kuroame216.github.io/sakamotodays-opening/`, location: loc, ctz: 'Asia/Tokyo' });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
-
-// マイリストの選択IDから対応するアイテムを引く
-function findMylistItemById(id) {
-  const groups = buildMylistData();
-  for (const g of groups) {
-    for (const it of g.items) {
-      if (it.id === id) {
-        return { day: g.key, theater: it.theater, start: it.start, end: it.end, type: it.type };
-      }
-    }
-  }
-  return null;
+function buildDateTime(dayKey, timeStr) {
+  const [m, d] = dayKey.split('/').map(Number); let [hh, mm] = timeStr.split(':').map(Number), offset = hh >= 24 ? 1 : 0;
+  return new Date(2026, m - 1, d + offset, hh % 24, mm);
 }
+function fmtGCalLocal(dt) { const p = n => String(n).padStart(2, '0'); return `${dt.getFullYear()}${p(dt.getMonth() + 1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`; }
+
+const THEATER_ADDRESSES = { 'TOHO日比谷': '東京都千代田区有楽町1-1-2', 'TOHO日本橋': '東京都中央区日本橋室町1-4-1', 'TOHO上野': '東京都台東区上野3-24-6', '池袋HUMAXシネマズ': '東京都豊島区東池袋1-22-10', 'TOHO池袋': '東京都豊島区東池袋1-30-3', 'グランドシネマサンシャイン池袋': '東京都豊島区東池袋1-30-3', 'TOHO新宿': '東京都新宿区歌舞伎町1-19-1', '新宿バルト9': '東京都新宿区新宿3-1-26', '新宿ピカデリー': '東京都新宿区新宿3-15-15', '109シネマズプレミアム新宿': '東京都新宿区歌舞伎町1-29-1', 'TOHO渋谷': '東京都渋谷区道玄坂2-6-17', 'TOHO六本木ヒルズ': '東京都港区六本木6-10-2', 'T・ジョイPRINCE品川': '東京都港区高輪4-10-30', 'TOHO大井町': '東京都品川区大井1-3-6', 'ユナイテッド・シネマ アクアシティお台場': '東京都港区台場1-7-1', 'ユナイテッド・シネマ豊洲': '東京都江東区豊洲2-4-9', '109シネマズ二子玉川': '東京都世田谷区玉川1-14-1' };
 
 function renderFilters() {
   const wrap = document.getElementById('filters');
-  let html = `<div class="filter-panel" aria-label="地域フィルター">`;
-  html += `<div class="area-toolbar">`;
-  html += `<button class="area-link" id="all-on" type="button">全表示</button>`;
-  html += `<span class="area-slash">/</span>`;
-  html += `<button class="area-link" id="all-off" type="button">全解除</button>`;
-  html += `<span class="area-slash">/</span>`;
-  html += `<button class="area-link" id="toggle-mode" type="button">${isTextMode ? 'デザイン表示' : 'テキスト表示'}</button>`;
-  html += `</div>`;
-  html += `<div class="area-check-row">`;
-  html += AREA_ORDER.map(a =>
-    `<label class="area-check"><input type="checkbox" data-area="${a}" ${activeAreas.has(a) ? 'checked' : ''}><span>${a}</span></label>`
-  ).join('');
-  html += `</div>`;
-  html += `</div>`;
-  wrap.innerHTML = html;
-
-  wrap.querySelectorAll('[data-area]').forEach(input => {
-    input.addEventListener('change', () => {
-      const a = input.dataset.area;
-      if (input.checked) activeAreas.add(a); else activeAreas.delete(a);
-      render();
-    });
-  });
-  document.getElementById('all-on').addEventListener('click', () => {
-    activeAreas = new Set(AREA_ORDER); renderFilters(); render();
-  });
-  document.getElementById('all-off').addEventListener('click', () => {
-    activeAreas = new Set(); renderFilters(); render();
-  });
-  document.getElementById('toggle-mode').addEventListener('click', () => {
-    isTextMode = !isTextMode;
-    // テキストモードに入るとき、マイリストのみモードは解除（チャート専用機能）
-    if (isTextMode && mylistOnly) mylistOnly = false;
-    renderFilters();
-    render();
-    renderMylist();
-  });
+  wrap.innerHTML = `<div class="filter-panel"><div class="area-toolbar"><button class="area-link" id="all-on">全表示</button> / <button class="area-link" id="all-off">全解除</button> / <button class="area-link" id="toggle-mode">${isTextMode ? 'デザイン表示' : 'テキスト表示'}</button></div><div class="area-check-row">${AREA_ORDER.map(a => `<label class="area-check"><input type="checkbox" data-area="${a}" ${activeAreas.has(a) ? 'checked' : ''}><span>${a}</span></label>`).join('')}</div></div>`;
+  wrap.querySelectorAll('[data-area]').forEach(i => i.addEventListener('change', () => { if (i.checked) activeAreas.add(i.dataset.area); else activeAreas.delete(i.dataset.area); render(); }));
+  document.getElementById('all-on').addEventListener('click', () => { activeAreas = new Set(AREA_ORDER); renderFilters(); render(); });
+  document.getElementById('all-off').addEventListener('click', () => { activeAreas = new Set(); renderFilters(); render(); });
+  document.getElementById('toggle-mode').addEventListener('click', () => { isTextMode = !isTextMode; renderFilters(); render(); });
 }
 
-// タブを動的生成: DAYS配列から作成し、データが空の日付は無効化
+// 「今日」基準で日付をパースして過去かどうか判定
+// DAYSのkey形式 "M/D" を、現在の年で日付に変換
+function getDayDate(dayKey) {
+  const [m, d] = dayKey.split('/').map(Number);
+  // CALENDAR_BASE_YEAR 定数を流用（カレンダー登録機能と同じ年）
+  const baseYear = (typeof CALENDAR_BASE_YEAR !== 'undefined') ? CALENDAR_BASE_YEAR : new Date().getFullYear();
+  return new Date(baseYear, m - 1, d);
+}
+function getTodayKey() {
+  const now = new Date();
+  return `${now.getMonth() + 1}/${now.getDate()}`;
+}
+function isPastDay(dayKey) {
+  const d = getDayDate(dayKey);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
+// 過去タブ折りたたみ状態（初期: 折りたたみ。ただし currentDay が過去日なら自動展開）
+let pastExpanded = isPastDay(currentDay);
+
 function renderTabs() {
   const wrap = document.getElementById('tab-wrap');
+  const pastDays = DAYS.filter(d => isPastDay(d.key));
+  const futureDays = DAYS.filter(d => !isPastDay(d.key));
+
   let html = '';
-  DAYS.forEach(day => {
-    const isActive = day.key === currentDay;
-    const hasData = (DATA[day.key] || []).length > 0;
-    const classes = ['tab'];
-    if (isActive) classes.push('active');
-    if (!hasData) classes.push('is-empty');
-    const ariaSelected = isActive ? 'true' : 'false';
-    const ariaDisabled = !hasData ? ' aria-disabled="true"' : '';
-    html += `<button class="${classes.join(' ')}" role="tab" aria-selected="${ariaSelected}"${ariaDisabled} data-day="${day.key}">${day.label}</button>`;
-  });
+
+  // 過去日が1つ以上ある場合のみ折りたたみボタンを表示
+  if (pastDays.length > 0) {
+    html += `<button class="past-toggle${pastExpanded ? ' expanded' : ''}" type="button" aria-expanded="${pastExpanded}"><span class="toggle-arrow">▶</span>過去</button>`;
+    if (pastExpanded) {
+      html += pastDays.map(d => {
+        const isEmpty = (DATA[d.key] || []).length === 0;
+        const isActive = d.key === currentDay;
+        return `<button class="tab is-past${isActive ? ' active' : ''}${isEmpty ? ' is-empty' : ''}" data-day="${d.key}">${d.label}<span class="tab-sublabel">上映済</span></button>`;
+      }).join('');
+    }
+  }
+
+  // 未来（今日含む）の日付タブ
+  html += futureDays.map(d => {
+    const isEmpty = (DATA[d.key] || []).length === 0;
+    const isActive = d.key === currentDay;
+    return `<button class="tab${isActive ? ' active' : ''}${isEmpty ? ' is-empty' : ''}" data-day="${d.key}">${d.label}</button>`;
+  }).join('');
+
   wrap.innerHTML = html;
 
-  wrap.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const newDay = btn.dataset.day;
-      if (newDay === currentDay) return;
-      currentDay = newDay;
+  // 折りたたみトグル
+  const toggleBtn = wrap.querySelector('.past-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      pastExpanded = !pastExpanded;
       renderTabs();
-      render();
     });
-  });
+  }
+
+  // 通常タブのクリック
+  wrap.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { currentDay = b.dataset.day; renderTabs(); render(); }));
 }
 
-renderTabs();
-renderFilters();
-render();
-renderMylist();
-
-// マイリストのアクションボタン
-document.getElementById('mylist-copy').addEventListener('click', copyMylist);
-document.getElementById('mylist-only').addEventListener('click', () => {
-  mylistOnly = !mylistOnly;
-  renderMylist();
-  render();
-});
-// 全クリアボタン: 2段階確認方式（誤タップ防止＆ネイティブconfirmの不安定性回避）
 (function setupMylistClear() {
   const btn = document.getElementById('mylist-clear');
   if (!btn) return;
@@ -1044,73 +808,94 @@ document.getElementById('mylist-only').addEventListener('click', () => {
     e.stopPropagation();
     if (mylist.size === 0) return;
     if (btn.classList.contains('confirming')) {
-      // 2回目のタップ: 実行
       mylist.clear();
       saveMylist(mylist);
       mylistOnly = false;
       reset();
       renderMylist();
       render();
+      fixScrollAfterShrink();
     } else {
-      // 1回目のタップ: 確認モードに
       btn.textContent = CONFIRM_TEXT;
       btn.classList.add('confirming');
-      // 3秒以内に2回目のタップがなければキャンセル
       confirmTimer = setTimeout(reset, 3000);
     }
   });
-  // 他の場所をタップしたらキャンセル
   document.addEventListener('click', (e) => {
-    if (btn.classList.contains('confirming') && !btn.contains(e.target)) {
-      reset();
-    }
+    if (btn.classList.contains('confirming') && !btn.contains(e.target)) reset();
   });
 })();
 
+renderTabs(); renderFilters(); render(); renderMylist();
+document.getElementById('mylist-copy').addEventListener('click', () => { const t = buildMylistData().map(g => `【${g.label}】\n` + g.items.map(i => `・${i.start}-${i.end} ${i.theater}`).join('\n')).join('\n\n'); navigator.clipboard.writeText(t); alert('コピーしました'); });
+document.getElementById('mylist-only').addEventListener('click', () => { mylistOnly = !mylistOnly; render(); });
+
+// === iOS Safari 初期スクロール対策 ===
+// 読み込み直後にレイアウト計算が確定していないと縦スクロールが効かないことがあるので、
+// 強制リフローを促してスクロール処理を初期化する
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => {
+    // bodyに対して読み取り操作を行うことで強制リフロー
+    void document.body.offsetHeight;
+    // スクロール位置を念のため初期化（既にスクロールされている場合は維持）
+    if (window.scrollY === 0) {
+      window.scrollTo(0, 0);
+    }
+  });
+});
+
+// === マイリスト削除後のスクロール位置補正 ===
+// マイリストの内容が縮んだ時、スクロール位置がページ範囲外になる問題への対策
+function fixScrollAfterShrink() {
+  requestAnimationFrame(() => {
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    if (window.scrollY > maxScroll) {
+      window.scrollTo({ top: maxScroll, behavior: 'instant' });
+    }
+  });
+}
+
 // === iOS Safari 縦スクロール対応 ===
-// チャート部分のタッチ方向を判定し、縦スワイプの場合はページをスクロール
+// チャート部分(横スクロール領域)の上で縦スワイプした時、
+// ページ全体の縦スクロールに変換する
 (function() {
-  const wrap = document.getElementById('chart-wrap');
-  if (!wrap) return;
-
+  const chartWrap = document.getElementById('chart-wrap');
+  if (!chartWrap) return;
   let startX = 0, startY = 0;
-  let lastY = 0;
   let direction = null; // 'horizontal' | 'vertical' | null
+  const THRESHOLD = 8; // px
 
-  wrap.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) { direction = null; return; }
+  chartWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    lastY = startY;
     direction = null;
   }, { passive: true });
 
-  wrap.addEventListener('touchmove', (e) => {
+  chartWrap.addEventListener('touchmove', (e) => {
     if (e.touches.length !== 1) return;
-    const curX = e.touches[0].clientX;
-    const curY = e.touches[0].clientY;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
 
-    // 方向未確定: しきい値を超えた時点で判定
+    // 方向を確定（最初に判定された方向で固定）
     if (direction === null) {
-      const absX = Math.abs(curX - startX);
-      const absY = Math.abs(curY - startY);
-      if (absX < 8 && absY < 8) return;
-      direction = absY > absX ? 'vertical' : 'horizontal';
+      if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
+      direction = Math.abs(dy) > Math.abs(dx) ? 'vertical' : 'horizontal';
     }
 
-    // 縦スワイプ: チャートの横スクロールを抑止し、ページを手動でスクロール
     if (direction === 'vertical') {
-      const dy = curY - lastY;
-      lastY = curY;
+      // 縦スワイプ → ブラウザの判定を止めてページを手動スクロール
       e.preventDefault();
-      window.scrollBy(0, -dy);
+      const newY = startY - e.touches[0].clientY;
+      window.scrollBy(0, newY);
+      // 次のmoveの基準点を更新
+      startY = e.touches[0].clientY;
     }
+    // 横スワイプの場合は何もしない（ブラウザの横スクロール処理に任せる）
   }, { passive: false });
 
-  wrap.addEventListener('touchend', () => { direction = null; }, { passive: true });
-  wrap.addEventListener('touchcancel', () => { direction = null; }, { passive: true });
+  chartWrap.addEventListener('touchend', () => { direction = null; }, { passive: true });
 })();
 </script>
-
 </body>
 </html>
