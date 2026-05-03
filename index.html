@@ -148,6 +148,7 @@
 
 .stage-bg { position: absolute; top: 0; bottom: 0; background: rgba(239, 159, 39, 0.1); pointer-events: none; z-index: 0; }
 .free-slot-bg { position: absolute; top: 0; bottom: 0; background: rgba(75, 156, 211, 0.18); pointer-events: none; z-index: 0; }
+.now-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #F9E9E8; pointer-events: none; z-index: 1; }
 
 .theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 4px; }
 
@@ -372,6 +373,26 @@ function freeSlotBgHtml() {
   }).join('');
 }
 
+// 現在時刻の縦線を描画（今日のタブを見ている時のみ表示）
+function nowLineHtml() {
+  // 表示中のタブが今日でなければ何も出さない
+  const todayKey = (function() {
+    const now = new Date();
+    return `${now.getMonth() + 1}/${now.getDate()}`;
+  })();
+  if (currentDay !== todayKey) return '';
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const offsetMin = nowMin - START_HOUR * 60;
+  const totalMin = (END_HOUR - START_HOUR) * 60;
+  // チャート時間範囲外なら表示しない
+  if (offsetMin < 0 || offsetMin > totalMin) return '';
+
+  const left = (offsetMin / 60) * HOUR_W;
+  return `<div class="now-line" style="left: ${left}px;"></div>`;
+}
+
 function buildMylistRowHtml(chartWidth, totalHours) {
   const dayData = DATA[currentDay] || [];
   const selectedShows = [];
@@ -400,6 +421,7 @@ function buildMylistRowHtml(chartWidth, totalHours) {
   html += `<div class="bar-area" style="height: ${rowH}px;">`;
   html += stageBgHtml();
   html += freeSlotBgHtml();
+  html += nowLineHtml();
   html += `<div class="theater-watermark">マイリスト</div>`;
   for (let h = 1; h < totalHours; h++) {
     html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
@@ -469,7 +491,7 @@ function render() {
       html += `<div class="row-area-cell" style="height: ${rowH}px;">${isFirstInArea && isFirstRow ? theater.area : ''}</div>`;
       html += `<div class="row-theater-cell" style="height: ${rowH}px;"><span class="row-theater">${isFirstRow ? theater.theater : ''}</span><span class="kind-badge">${row.kind}</span></div>`;
       html += `<div class="bar-area" style="height: ${rowH}px;">`;
-      html += stageBgHtml() + freeSlotBgHtml();
+      html += stageBgHtml() + freeSlotBgHtml() + nowLineHtml();
       if (isFirstRow) html += `<div class="theater-watermark">${theater.theater}</div>`;
       for (let h = 1; h < totalHours; h++) html += `<div style="position: absolute; left: ${h * HOUR_W}px; top: 0; bottom: 0; width: 0; border-left: 0.5px dashed var(--color-border-tertiary); z-index: 1;"></div>`;
       const barTop = isFirstRow ? 18 : Math.round((rowH - BAR_H) / 2);
@@ -660,6 +682,19 @@ function renderTabs() {
 })();
 
 renderTabs(); renderFilters(); render(); renderMylist();
+
+// === 現在時刻ラインの自動更新 ===
+// 1分ごとに再描画して時刻線が遅れないようにする
+setInterval(() => {
+  // 表示中のタブが今日の場合のみ再描画
+  const todayKey = (function() {
+    const now = new Date();
+    return `${now.getMonth() + 1}/${now.getDate()}`;
+  })();
+  if (currentDay === todayKey && !isTextMode) {
+    render();
+  }
+}, 60 * 1000);
 document.getElementById('mylist-copy').addEventListener('click', () => { const t = buildMylistData().map(g => `【${g.label}】\n` + g.items.map(i => `・${i.start}-${i.end} ${i.theater}`).join('\n')).join('\n\n'); navigator.clipboard.writeText(t); alert('コピーしました'); });
 document.getElementById('mylist-only').addEventListener('click', () => { mylistOnly = !mylistOnly; render(); });
 
