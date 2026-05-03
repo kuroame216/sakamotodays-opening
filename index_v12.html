@@ -185,7 +185,7 @@
 .mylist-item .cal-btn { display: inline-block; cursor: pointer; user-select: none; flex-shrink: 0; padding: 0 2px; font-size: 12px; line-height: 1.7; transition: opacity 0.15s; }
 .mylist-item .cal-btn:hover { opacity: 0.7; }
 .mylist-item .item-text { flex: 1; min-width: 0; }
-.mylist-item .remove-btn { display: inline-block; margin-left: auto; padding-left: 8px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; flex-shrink: 0; }
+.mylist-item .remove-btn { display: inline-block; margin-left: 6px; color: var(--color-text-tertiary); cursor: pointer; font-size: 11px; user-select: none; }
 .mylist-item .remove-btn:hover { color: var(--color-text-primary); }
 .mylist-help { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 8px; line-height: 1.5; }
 .mylist-actions { display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
@@ -697,7 +697,7 @@ function renderMylist() {
   if (total === 0) { section.style.display = 'none'; if (mylistOnly) { mylistOnly = false; render(); } return; }
   section.style.display = '';
   document.getElementById('mylist-count').textContent = `(${total}件)`;
-  content.innerHTML = groups.map(g => `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>` + g.items.map(it => `<div class="mylist-item"><span class="cal-btn" data-id="${escapeHtml(it.id)}">📅</span><span class="item-text">${it.start}-${it.end} ${it.theater}${it.type === '通常' ? '' : `（${it.type}）`}</span><span class="remove-btn" data-id="${escapeHtml(it.id)}">×</span></div>`).join('')).join('');
+  content.innerHTML = groups.map(g => `<div class="mylist-day-label">【${escapeHtml(g.label)}】</div>` + g.items.map(it => `<div class="mylist-item"><span class="cal-btn" data-id="${escapeHtml(it.id)}">📅</span><span class="item-text">${it.start}-${it.end} ${it.theater}${it.type === '通常' ? '' : `（${it.type}）`}<span class="remove-btn" data-id="${escapeHtml(it.id)}">×</span></span></div>`).join('')).join('');
   content.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', () => { mylist.delete(btn.dataset.id); saveMylist(mylist); renderMylist(); render(); }));
   content.querySelectorAll('.cal-btn').forEach(btn => btn.addEventListener('click', () => { 
     const item = buildMylistData().flatMap(g => g.items).find(i => i.id === btn.dataset.id);
