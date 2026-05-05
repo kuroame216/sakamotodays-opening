@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>SAKAMOTO DAYS 都心部 上映スケジュール</title>
   <style>
     :root {
@@ -54,6 +57,7 @@
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #378ADD; display: inline-block; border-radius: 2px;"></span>ScreenX</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #7F77DD; display: inline-block; border-radius: 2px;"></span>IMAX</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #D86BB1; display: inline-block; border-radius: 2px;"></span>MX4D</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #888780; display: inline-block; border-radius: 2px;"></span>通常</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(239, 159, 39, 0.15); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(239, 159, 39, 0.4);"></span>舞台挨拶の時間帯</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(75, 156, 211, 0.22); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(75, 156, 211, 0.5);"></span>空き時間（2h以上）</div>
@@ -239,6 +243,7 @@ const COLORS = {
   'IMAX GT': '#7F77DD',
   'Dolby': '#97C459',
   'ScreenX': '#378ADD',
+  'MX4D': '#D86BB1',
   '舞台挨拶': '#E24B4A'
 };
 
@@ -573,7 +578,7 @@ function buildDateTime(dayKey, timeStr) {
 }
 function fmtGCalLocal(dt) { const p = n => String(n).padStart(2, '0'); return `${dt.getFullYear()}${p(dt.getMonth() + 1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`; }
 
-const THEATER_ADDRESSES = { 'TOHO日比谷': '東京都千代田区有楽町1-1-2', 'TOHO日本橋': '東京都中央区日本橋室町1-4-1', 'TOHO上野': '東京都台東区上野3-24-6', '池袋HUMAXシネマズ': '東京都豊島区東池袋1-22-10', 'TOHO池袋': '東京都豊島区東池袋1-30-3', 'グランドシネマサンシャイン池袋': '東京都豊島区東池袋1-30-3', 'TOHO新宿': '東京都新宿区歌舞伎町1-19-1', '新宿バルト9': '東京都新宿区新宿3-1-26', '新宿ピカデリー': '東京都新宿区新宿3-15-15', '109シネマズプレミアム新宿': '東京都新宿区歌舞伎町1-29-1', 'TOHO渋谷': '東京都渋谷区道玄坂2-6-17', 'TOHO六本木ヒルズ': '東京都港区六本木6-10-2', 'T・ジョイPRINCE品川': '東京都港区高輪4-10-30', 'TOHO大井町': '東京都品川区大井1-3-6', 'ユナイテッド・シネマ アクアシティお台場': '東京都港区台場1-7-1', 'ユナイテッド・シネマ豊洲': '東京都江東区豊洲2-4-9', '109シネマズ二子玉川': '東京都世田谷区玉川1-14-1' };
+const THEATER_ADDRESSES = { 'TOHO日比谷': '東京都千代田区有楽町1-1-2', 'TOHO日本橋': '東京都中央区日本橋室町1-4-1', 'TOHO上野': '東京都台東区上野3-24-6', '池袋HUMAXシネマズ': '東京都豊島区東池袋1-22-10', 'TOHO池袋': '東京都豊島区東池袋1-30-3', 'グランドシネマサンシャイン池袋': '東京都豊島区東池袋1-30-3', 'TOHO新宿': '東京都新宿区歌舞伎町1-19-1', '新宿バルト9': '東京都新宿区新宿3-1-26', '新宿ピカデリー': '東京都新宿区新宿3-15-15', '109シネマズプレミアム新宿': '東京都新宿区歌舞伎町1-29-1', 'TOHO渋谷': '東京都渋谷区道玄坂2-6-17', 'TOHO六本木ヒルズ': '東京都港区六本木6-10-2', 'T・ジョイPRINCE品川': '東京都港区高輪4-10-30', 'TOHO大井町': '東京都品川区大井1-3-6', 'ユナイテッド・シネマ アクアシティお台場': '東京都港区台場1-7-1', 'ユナイテッド・シネマ豊洲': '東京都江東区豊洲2-4-9', '109シネマズ二子玉川': '東京都世田谷区玉川1-14-1', 'TOHO西新井': '東京都足立区西新井1-17-1' };
 
 function renderFilters() {
   const wrap = document.getElementById('filters');
