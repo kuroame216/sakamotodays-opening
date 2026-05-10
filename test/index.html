@@ -50,13 +50,13 @@
 </div>
 
 <div class="legend-panel">
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #E24B4A; display: inline-block; border-radius: 2px;"></span>舞台挨拶</div>
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #EF9F27; display: inline-block; border-radius: 2px;"></span>中継</div>
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #378ADD; display: inline-block; border-radius: 2px;"></span>ScreenX</div>
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #7F77DD; display: inline-block; border-radius: 2px;"></span>IMAX</div>
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
-  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #D86BB1; display: inline-block; border-radius: 2px;"></span>MX4D</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #888780; display: inline-block; border-radius: 2px;"></span>通常</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #7F77DD; display: inline-block; border-radius: 2px;"></span>IMAX</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #378ADD; display: inline-block; border-radius: 2px;"></span>ScreenX</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #D86BB1; display: inline-block; border-radius: 2px;"></span>4DX</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #EF9F27; display: inline-block; border-radius: 2px;"></span>中継</div>
+  <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #E24B4A; display: inline-block; border-radius: 2px;"></span>舞台挨拶</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(239, 159, 39, 0.15); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(239, 159, 39, 0.4);"></span>舞台挨拶の時間帯</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(75, 156, 211, 0.22); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(75, 156, 211, 0.5);"></span>空き時間（2h以上）</div>
 </div>
@@ -237,14 +237,27 @@ const COLORS = {
   '通常': '#888780',
   '中継': '#EF9F27',
   'IMAX': '#7F77DD',
-  'IMAX GT': '#7F77DD',
   'Dolby': '#97C459',
   'ScreenX': '#378ADD',
-  'MX4D': '#D86BB1',
   '4DX': '#D86BB1',
-  'ULTRA 4DX': '#D86BB1',
   '舞台挨拶': '#E24B4A'
 };
+
+// 種別文字列から色を判定（プレフィックス・キーワードでマッチング）
+function getColor(type) {
+  if (!type || type === '通常') return COLORS['通常'];
+  if (type === '中継') return COLORS['中継'];
+  if (type === '舞台挨拶') return COLORS['舞台挨拶'];
+  // ScreenX系（ScreenX、ScreenX with Dolby Atmos）
+  if (type.startsWith('ScreenX')) return COLORS['ScreenX'];
+  // IMAX系（IMAX、IMAXレーザー、IMAXレーザー/GTテクノロジー）
+  if (type.startsWith('IMAX')) return COLORS['IMAX'];
+  // Dolby系（Dolby、Dolby Atmos、Dolby Cinema）
+  if (type.startsWith('Dolby')) return COLORS['Dolby'];
+  // 4DX系（4DX、ULTRA 4DX、MX4D）
+  if (type === '4DX' || type === 'ULTRA 4DX' || type === 'MX4D') return COLORS['4DX'];
+  return COLORS['通常'];
+}
 
 const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 
@@ -435,7 +448,7 @@ function buildMylistRowHtml(chartWidth, totalHours) {
     const eMin = toMin(p.end) - START_HOUR * 60;
     const left = (sMin / 60) * HOUR_W;
     const width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
-    const color = COLORS[p.type] || COLORS['通常'];
+    const color = getColor(p.type);
     const suffix = p.type === '通常' ? '' : `（${p.type}）`;
     const labelText = `${p.start}${suffix}`;
     const tipText = `${p.theater}\n${p.start}-${p.end}${suffix}`;
@@ -505,7 +518,7 @@ function render() {
         const sMin = toMin(p.start) - START_HOUR * 60, eMin = toMin(p.end) - START_HOUR * 60;
         const left = (sMin / 60) * HOUR_W, width = Math.max(((eMin - sMin) / 60) * HOUR_W, 28);
         const tipText = `${theater.theater}\n${p.start}-${p.end}${p.type === '通常' ? '' : `（${p.type}）`}`;
-        html += `<div class="bar${mylist.has(showId) ? ' selected' : ''}" data-show-id="${showId.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${COLORS[p.type] || COLORS['通常']};"><span class="bar-label">${p.start}${p.type === '通常' ? '' : `（${p.type}）`}</span></div>`;
+        html += `<div class="bar${mylist.has(showId) ? ' selected' : ''}" data-show-id="${showId.replace(/"/g, '&quot;')}" data-tip="${tipText.replace(/"/g, '&quot;')}" style="left: ${left}px; width: ${width}px; top: ${barTop}px; background: ${getColor(p.type)};"><span class="bar-label">${p.start}${p.type === '通常' ? '' : `（${p.type}）`}</span></div>`;
       });
       html += `</div></div>`;
     });
