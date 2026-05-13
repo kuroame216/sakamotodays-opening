@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="data.js?v=255"></script>
+  <script src="data.js?v=25"></script>
   <title>SAKAMOTO DAYS 都心部 上映スケジュール</title>
   <style>
     :root {
@@ -144,20 +144,20 @@
 .row-theater { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
 .kind-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--color-background-secondary); color: var(--color-text-secondary); text-align: center; justify-self: end; }
 
-.row-line { border-top: 0.5px dotted #ECECEC; }
-.theater-divider { border-top: 0.5 solid #DDDDDD; }
+.row-line { border-top: none; }
+.theater-divider { border-top: 0.5px solid #DDDDDD; }
 .area-divider { border-top: 1px solid #BBBBBB; }
 
 .stage-bg { position: absolute; top: 0; bottom: 0; background: rgba(239, 159, 39, 0.1); pointer-events: none; z-index: 0; }
 .free-slot-bg { position: absolute; top: 0; bottom: 0; background: rgba(75, 156, 211, 0.18); pointer-events: none; z-index: 0; }
 .now-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #F9E9E8; pointer-events: none; z-index: 1; }
 
-.theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 4px; }
+.theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 2px; }
 
 .bar-area { position: relative; flex: 1; }
 
 @media (prefers-color-scheme: dark) {
-  .row-line { border-top-color: rgba(255,255,255,0.06); }
+  .row-line { border-top: none; }
   .theater-divider { border-top-color: rgba(255,255,255,0.12); }
   .area-divider { border-top-color: rgba(255,255,255,0.25); }
   .theater-watermark { color: #777; }
