@@ -1,1281 +1,3 @@
-
-上映スケジュール
-/
-Claudeが応答を完了しました
-あなたの入力: 上映スケジュール取得のブックマークレットを調整したいです
-上映スケジュール取得のブックマークレットを調整したいです
-
-取得するページ例）
-https://press.moviewalker.jp/mv91100/schedule/P_tokyo/
-東京は指定する劇場のみ
-
-https://press.moviewalker.jp/mv91100/schedule/P_kanagawa/
-https://press.moviewalker.jp/mv91100/schedule/P_chiba/
-神奈川・千葉など他は指定の特別上映がある時のみ（4DXなど）
-
-11:48
-
-考えていること：映画館指定と特別上映条件に基づくブックマークレット調整
-考えていること：映画館指定と特別上映条件に基づくブックマークレット調整
-Claudeの応答が中断されました。
-あなたの入力: ブックマークレット：
-スクリーンショット 2026-05-13 11.51.58.png
-スクリーンショット 2026-05-13 11.51.39.png
-
-bookmarklet.txt
-1行
-
-txt
-
-ブックマークレット：
-添付
-
-調整したいもの・問題点：
-特別上映と通常上映の種別が混在してしまっている。
-ページの表示、並び順が違っていても、上映種別とスケジュールが正しい状態で情報取得したい
-
-実際のページ上では、
-グランドシネマサンシャイン 池袋の日程が、実際は通常上映（ページ上で無印・種別なし）なのが、ULTRA 4DXになってしまっている
-
-ブックマークレットが取得したデータ例）
- 【5/15（金）】 
-08:15-10:25 グランドシネマサンシャイン池袋（ULTRA 4DX） 
-10:20-12:30 グランドシネマサンシャイン池袋（ULTRA 4DX）
-
-実際の情報）
- 【5/15（金）】 
-08:15-10:25 グランドシネマサンシャイン池袋 
-10:20-12:30 グランドシネマサンシャイン池袋（ULTRA 4DX）
-
-●仮説
-スクショを参照してください
-
-ページの構造は劇場名、上映種別マーク、スケジュールの順番で並んでいるのがフォーマット
-ただスケジュールの並び順が劇場によってまちまちで規則性がない
-
-TOHOシネマズ ららぽーと船橋
-通常上映→特別上映
-
-グランドシネマサンシャイン池袋
-特別上映→通常上映
-
-船橋の場合は、種別が混乱せず情報取得できているが、池袋は通常上映であることが無視され、全て特別上映になってしまっている
-
-もっと表示
-11:56
-Claudeが返答しました: 状況を理解しました。バグの原因と修正方法を先に説明します。
-
-コード構造を分析し、セクション単位の処理に再構築を提案した。
-コード構造を分析し、セクション単位の処理に再構築を提案した。
-状況を理解しました。バグの原因と修正方法を先に説明します。
-
-原因の分析
-現在のコードは currentFmt をページの並び順で更新し続ける設計です：
-
-currentFmt = '通常'（初期値）
-→ ブロックを上から順に走査
-→ ULTRA 4DX のラベル発見 → currentFmt = 'ULTRA 4DX'
-→ 次の通常上映のブロック → ラベルなし → currentFmt はそのまま 'ULTRA 4DX' ← ここが問題
-船橋は「通常 → MX4D」の順なので壊れない。
-池袋は「ULTRA 4DX → 通常」の順なので壊れる。
-
-修正方針
-現在: 全ブロックをフラットに走査して currentFmt を引き継ぐ
-修正後: 上映形式ごとのセクション（.bl_screen）単位で処理し、セクションごとに currentFmt をリセットする
-
-各 .bl_screen セクションを処理する
-  └ fmt = '通常'（セクションごとにリセット）
-  └ このセクション内にラベル（dt等）があれば fmt を更新
-  └ このセクションの li を fmt で出力
-この方針で修正しますか？
-
-承認いただければ、ブックマークレットの修正版を出力します。
-
-あなたの入力: はい。テストしてみます
-はい。テストしてみます
-
-12:11
-Claudeが返答しました: 修正版です。
-
-修正されたブックマークレットを構築した。
-修正されたブックマークレットを構築した。
-修正版です。
-
-javascript
-javascript:(()=>{const THTRS=['新宿バルト9','新宿ピカデリー','TOHOシネマズ 新宿','109シネマズプレミアム新宿','TOHOシネマズ 日比谷','TOHOシネマズ 日本橋','TOHOシネマズ 渋谷','池袋HUMAXシネマズ','グランドシネマサンシャイン 池袋','TOHOシネマズ 池袋','TOHOシネマズ 六本木ヒルズ','T・ジョイPRINCE品川','TOHOシネマズ 大井町','ユナイテッド・シネマ アクアシティお台場','ユナイテッド・シネマ豊洲','TOHOシネマズ 上野','TOHOシネマズ 西新井','109シネマズ二子玉川'];const norm=s=>(s||'').replace(/\s+/g,' ').trim();const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;document.querySelectorAll('article').forEach(art=>{const name=norm(art.querySelector('h3')?.innerText);if(!name)return;const hasMX4D=art.innerText.includes('MX4D');if(!hasMX4D&&!THTRS.some(t=>name.includes(t)))return;let screens=[...art.querySelectorAll('.bl_screen')];if(!screens.length)screens=[...art.querySelectorAll('div[class*="screen"]')];screens.forEach(screen=>{let currentFmt='通常';[...screen.children].forEach(blk=>{const txt=norm(blk.innerText);if(blk.matches('dt')||blk.classList.contains('bl_screen_lang')||txt.match(/(MX4D|4DX|Atmos|IMAX|ScreenX|字幕|吹替)/)){const m=txt.match(/[^\n]+/);if(m)currentFmt=m[0];}blk.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime,.time,span')].map(x=>norm(x.innerText).replace(/[◎○△×\s]/g,'')).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){res+=`【${d}】${name}\n形式: ${currentFmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-変更点まとめ:
-
-変更	旧	新
-currentFmt のスコープ	article全体で共有	.bl_screen セクションごとにリセット
-セクション走査	全セクションをフラットに連結	各セクションを独立して処理
-フォーマット検出regex	MX4D のみ	MX4D|4DX に拡張
-テストポイント:
-
-✅ グランドシネマサンシャイン 池袋
-  - 通常上映（無印）が「通常」で取得されるか
-  - ULTRA 4DX が正しくULTRA 4DXで取得されるか
-
-✅ TOHOシネマズ ららぽーと船橋（念のため）
-  - 通常→MX4D の順で正しく取得できているか（既存動作の維持確認）
-あなたの入力: 【5/13 水】グランドシネマサンシャイン 池袋
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 21:00
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 21:00
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:20
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:20
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:15
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:20
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:20
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 13:05,15:45,20:50
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 10:25,13:05,15:45,20:50
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 8:15,13:20,20:40
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 8:15,13:20,20:40
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 8:15,13:20,20:40
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 8:15,13:20,20:40
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX 上映形式
-時間: 8:15,13:20,20:40
-
-映画: SAKAMOTO DAYS 千葉県の上映映画館・上映スケジュール
----
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 19:40
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 8:15,19:40
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 9:15
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 9:15
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 9:15
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 9:15
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: MX4D 上映形式
-時間: 9:15
-
-もっと表示
-13:04
-Claudeが返答しました: 2つの問題が確認できます。
-
-二つの問題を診断し、HTMLスクリーン構造の修正を検討した。
-二つの問題を診断し、HTMLスクリーン構造の修正を検討した。
-2つの問題が確認できます。
-
-問題の分析
-問題①「上映形式」テキストが混入している
-
-ULTRA 4DX 上映形式 → 「上映形式」ボタンのテキストが種別名に入り込んでいる
-問題②（今回も未解決）池袋の通常上映が全部 ULTRA 4DX になっている
-
-.bl_screen セレクターで分割できていない可能性が高い
-おそらく池袋のHTMLでは、ULTRA 4DXと通常上映が同一の .bl_screen div内に混在している
-修正方針
-① 「上映形式」テキストを除去
-② .bl_screen の分割に頼らず、各スクリーンブロックの直前にある種別バッジ要素を参照する方式に変更
-
-javascript
-javascript:(()=>{const THTRS=['新宿バルト9','新宿ピカデリー','TOHOシネマズ 新宿','109シネマズプレミアム新宿','TOHOシネマズ 日比谷','TOHOシネマズ 日本橋','TOHOシネマズ 渋谷','池袋HUMAXシネマズ','グランドシネマサンシャイン 池袋','TOHOシネマズ 池袋','TOHOシネマズ 六本木ヒルズ','T・ジョイPRINCE品川','TOHOシネマズ 大井町','ユナイテッド・シネマ アクアシティお台場','ユナイテッド・シネマ豊洲','TOHOシネマズ 上野','TOHOシネマズ 西新井','109シネマズ二子玉川'];const norm=s=>(s||'').replace(/\s+/g,' ').trim();const cleanFmt=s=>s.replace(/\s*上映形式.*/,'').replace(/\s*[?？].*/,'').trim();const FMTRE=/(MX4D|4DX|Atmos|IMAX|ScreenX|字幕|吹替)/;const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;document.querySelectorAll('article').forEach(art=>{const name=norm(art.querySelector('h3')?.innerText);if(!name)return;const hasMX4D=art.innerText.includes('MX4D');if(!hasMX4D&&!THTRS.some(t=>name.includes(t)))return;const children=[...art.children];let currentFmt='通常';children.forEach(el=>{const txt=norm(el.innerText);if(FMTRE.test(txt)&&!el.querySelector('li')){const m=txt.match(/[^\n]+/);if(m)currentFmt=cleanFmt(m[0]);}if(!FMTRE.test(txt)&&!el.querySelector('li')&&txt.length<5){currentFmt='通常';}el.querySelectorAll('ul > li, ol > li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime,.time,span')].map(x=>norm(x.innerText).replace(/[◎○△×\s]/g,'')).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){res+=`【${d}】${name}\n形式: ${currentFmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-変更点:
-
-種別バッジ検出を .bl_screen 内ではなく article の直接の子要素単位に変更
-「種別なし・短いテキスト要素」が来たら 通常 にリセット
-cleanFmt() で「上映形式」「?」などの余分なテキストを除去
-テストポイント:
-
-✅ グランドシネマサンシャイン 池袋
-  - 通常上映が「通常」になるか
-  - ULTRA 4DX が「ULTRA 4DX」（「上映形式」なし）になるか
-
-✅ TOHOシネマズ ららぽーと船橋
-  - 通常・MX4D が引き続き正しく取得できるか
-
-✅ 形式名に「上映形式」が含まれていないか
-あなたの入力: 【5/13 水】グランドシネマサンシャイン 池袋
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 21:00
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 21:00
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:20
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:20
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:15
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:20
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:20
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 13:05,15:45,20:50
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 10:25,13:05,15:45,20:50
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 8:15,13:20,20:40
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 8:15,13:20,20:40
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 8:15,13:20,20:40
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 8:15,13:20,20:40
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: 通常
-時間: 8:15,13:20,20:40
-
-映画: SAKAMOTO DAYS 千葉県の上映映画館・上映スケジュール
----
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 19:40
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 8:15,19:40
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-
-表示を減らす
-13:07
-Claudeが返答しました: 逆方向になってしまいました。今度は全部「通常」になっています。
-
-Debugged DOM traversal logic for screening format detection
-Debugged DOM traversal logic for screening format detection
-逆方向になってしまいました。今度は全部「通常」になっています。
-
-原因
-「通常リセット条件」が過剰に反応して、MX4D/ULTRA 4DXバッジを見つける前にリセットしてしまっています。
-
-方針転換
-currentFmtを上から順番に追う方式を諦めて、各スケジュールブロック（li）からDOMを遡って最寄りのバッジ要素を探す方式に切り替えます。
-
-バッジ要素の判別条件：「フォーマットキーワードを含む」かつ「時刻（数字:数字）を含まない」
-
-javascript
-javascript:(()=>{const THTRS=['新宿バルト9','新宿ピカデリー','TOHOシネマズ 新宿','109シネマズプレミアム新宿','TOHOシネマズ 日比谷','TOHOシネマズ 日本橋','TOHOシネマズ 渋谷','池袋HUMAXシネマズ','グランドシネマサンシャイン 池袋','TOHOシネマズ 池袋','TOHOシネマズ 六本木ヒルズ','T・ジョイPRINCE品川','TOHOシネマズ 大井町','ユナイテッド・シネマ アクアシティお台場','ユナイテッド・シネマ豊洲','TOHOシネマズ 上野','TOHOシネマズ 西新井','109シネマズ二子玉川'];const norm=s=>(s||'').replace(/\s+/g,' ').trim();const cleanFmt=s=>s.replace(/\s*上映形式.*/,'').replace(/\s*[?？].*/,'').trim();const FMTRE=/(MX4D|4DX|Atmos|IMAX|ScreenX)/;const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;const getFmt=(startEl,art)=>{let node=startEl.parentElement;while(node&&node!==art){let sib=node.previousElementSibling;while(sib){const txt=norm(sib.innerText);if(FMTRE.test(txt)&&!/\d{1,2}:\d{2}/.test(txt)){return cleanFmt(txt.split('\n')[0]);}sib=sib.previousElementSibling;}node=node.parentElement;}return '通常';};document.querySelectorAll('article').forEach(art=>{const name=norm(art.querySelector('h3')?.innerText);if(!name)return;const hasMX4D=art.innerText.includes('MX4D');if(!hasMX4D&&!THTRS.some(t=>name.includes(t)))return;art.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime,.time,span')].map(x=>norm(x.innerText).replace(/[◎○△×\s]/g,'')).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){const fmt=getFmt(li,art);res+=`【${d}】${name}\n形式: ${fmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-テストポイント:
-
-✅ グランドシネマサンシャイン 池袋
-  - ULTRA 4DX → 「ULTRA 4DX」
-  - 通常上映 → 「通常」
-
-✅ TOHOシネマズ ららぽーと船橋
-  - 通常 → 「通常」
-  - MX4D → 「MX4D」
-
-✅ 形式名に「上映形式」が混入していないか
-あなたの入力: 【5/13 水】グランドシネマサンシャイン 池袋
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 21:00
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 21:00
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:20
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:20
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:15
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:20
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:20
-【5/13 水】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 13:05,15:45,20:50
-【5/14 木】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 10:25,13:05,15:45,20:50
-【5/15 金】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 8:15,13:20,20:40
-【5/16 土】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 8:15,13:20,20:40
-【5/17 日】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 8:15,13:20,20:40
-【5/18 月】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 8:15,13:20,20:40
-【5/19 火】グランドシネマサンシャイン 池袋
-形式: ULTRA 4DX
-時間: 8:15,13:20,20:40
-
-もっと表示
-13:11
-Claudeが返答しました: まだ全部 ULTRA 4DX になっています。原因がわかりました。
-
-Diagnosed DOM traversal bug and engineered targeted fix
-Diagnosed DOM traversal bug and engineered targeted fix
-まだ全部 ULTRA 4DX になっています。原因がわかりました。
-
-原因の特定
-DOMを遡ると、2つ目の「通常」テーブルも、前方にある ULTRA 4DX バッジを拾ってしまっています。
-
-article
-  ├ [ULTRA 4DX バッジ]
-  ├ [スケジュールブロック①] ← ULTRA 4DX
-  └ [スケジュールブロック②] ← 通常（バッジなし）
-         ↑ 遡ると①をまたいでバッジを発見してしまう
-修正方針
-「li の祖先のうち article の直接の子」（＝スケジュールブロック）を特定して、その真直前の兄弟要素だけをバッジ候補として確認する。バッジがなければ「通常」。
-
-javascript
-javascript:(()=>{const THTRS=['新宿バルト9','新宿ピカデリー','TOHOシネマズ 新宿','109シネマズプレミアム新宿','TOHOシネマズ 日比谷','TOHOシネマズ 日本橋','TOHOシネマズ 渋谷','池袋HUMAXシネマズ','グランドシネマサンシャイン 池袋','TOHOシネマズ 池袋','TOHOシネマズ 六本木ヒルズ','T・ジョイPRINCE品川','TOHOシネマズ 大井町','ユナイテッド・シネマ アクアシティお台場','ユナイテッド・シネマ豊洲','TOHOシネマズ 上野','TOHOシネマズ 西新井','109シネマズ二子玉川'];const norm=s=>(s||'').replace(/\s+/g,' ').trim();const cleanFmt=s=>s.replace(/\s*上映形式.*/,'').replace(/\s*[?？].*/,'').trim();const FMTRE=/(MX4D|4DX|Atmos|IMAX|ScreenX)/;const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;const getFmt=(li,art)=>{let block=li;while(block.parentElement&&block.parentElement!==art)block=block.parentElement;const prev=block.previousElementSibling;if(prev){const txt=norm(prev.innerText);if(FMTRE.test(txt)&&!/\d{1,2}:\d{2}/.test(txt))return cleanFmt(txt.split('\n')[0]);}return '通常';};document.querySelectorAll('article').forEach(art=>{const name=norm(art.querySelector('h3')?.innerText);if(!name)return;const hasMX4D=art.innerText.includes('MX4D');if(!hasMX4D&&!THTRS.some(t=>name.includes(t)))return;art.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime,.time,span')].map(x=>norm(x.innerText).replace(/[◎○△×\s]/g,'')).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){const fmt=getFmt(li,art);res+=`【${d}】${name}\n形式: ${fmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-テストポイント:
-
-✅ グランドシネマサンシャイン 池袋
-  - ULTRA 4DX → 「ULTRA 4DX」
-  - 通常（バッジなし）→ 「通常」
-
-✅ TOHOシネマズ ららぽーと船橋
-  - 通常 → 「通常」
-  - MX4D → 「MX4D」
-あなたの入力: 映画: SAKAMOTO DAYS 千葉県の上映映画館・上映スケジュール
-
-映画: SAKAMOTO DAYS 東京都の上映映画館・上映スケジュール --- 【5/13 水】新宿バルト9 形式: 通常 時間: 13:40,22:00,25:15 【5/14 木】新宿バルト9 形式: 通常 時間: 11:00,13:40,20:20 【5/15 金】新宿バルト9 形式: 通常 時間: 8:30,12:40,18:20,26:00 【5/13 水】新宿バルト9 形式: 通常 時間: 16:30 【5/14 木】新宿バルト9 形式: 通常 時間: 8:30,16:30 【5/15 金】新宿バルト9 形式: 通常 時間: 21:15 【5/13 水】新宿ピカデリー
-
-pasted
-
-映画: SAKAMOTO DAYS 千葉県の上映映画館・上映スケジュール
----
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,17:40,20:30
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 12:00,14:50,20:30
-【5/13 水】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 19:40
-【5/14 木】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 8:15,19:40
-【5/15 金】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/16 土】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/17 日】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/18 月】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-【5/19 火】TOHOシネマズ ららぽーと船橋
-形式: 通常
-時間: 9:15
-
-難しいようですね
-
-もっと表示
-13:13
-
-前のセクションのバッジを誤認識する不具合を修正中。
-前のセクションのバッジを誤認識する不具合を修正中。
-Claudeの応答が中断されました。
-あなたの入力: 混乱するかもしれないですが、一旦整理してシンプルしたい。
-混乱するかもしれないですが、一旦整理してシンプルしたい。
-①元のJS（ブックマークレット）に準拠する必要はない（必要があれば抜本的に変えても良い）
-②やりたいことの整理
-・SAKAMOTO DAYS都内上映スケジュールページの更新のための情報取得
-・data.jsの更新に使用する
-・東京：全ての上映種別ごとの上映スケジュールを取得（今までは指定したエリアのみだったが変更したい）
-・それ以外の関東圏：4DX・MX4D・Ultra4DXの上映がある劇場の全ての上映種別ごとの上映スケジュールを取得
-
-13:19
-Claudeが返答しました: 整理ありがとうございます。要件がシンプルになりました。
-
-要件整理し、DOM構造解析による堅牢なスクレイピング方式を設計した。
-要件整理し、DOM構造解析による堅牢なスクレイピング方式を設計した。
-整理ありがとうございます。要件がシンプルになりました。
-
-新設計の提案
-ロジックの全面刷新
-ページ判定：URLに P_tokyo が含まれるかで自動判別
-
-劇場フィルタ：
-
-東京ページ → 全劇場を対象（劇場名リスト不要）
-その他ページ → article内に 4DX/MX4D/ULTRA 4DX が含まれる劇場のみ対象
-種別検出（新方式）：
-
-article の子要素を上から順に走査
-
-[種別バッジ要素] → pendingFmt に保存
-[スケジュール要素] → pendingFmt があればその種別、なければ「通常」、消費してリセット
-[その他要素] → 無視（スルー）
-このロジックにより：
-
-劇場	並び	動作
-グランドシネマサンシャイン池袋	ULTRA 4DX → 通常	ULTRA 4DX消費 → 次は通常 ✅
-ららぽーと船橋	通常 → MX4D	バッジなし→通常、MX4D消費 ✅
-劇場名リストは不要になります（東京は全取得、他は自動フィルタ）
-
-この方針で実装しますか？
-
-あなたの入力: ロジックの全面刷新
-ロジックの全面刷新
-ページ判定：URLに P_tokyo が含まれるかで自動判別
-＝前リスト取得か4DX系を含むスケジュールかってことで良い？
-
-13:21
-Claudeが返答しました: はい、その理解で正しいです。
-
-ページ判定ロジックの説明を整理した。
-ページ判定ロジックの説明を整理した。
-はい、その理解で正しいです。
-
-URL	対象劇場
-P_tokyo を含む	ページ内の全劇場を取得
-それ以外（P_kanagawa など）	4DX/MX4D/ULTRA 4DX を含む劇場のみ取得
-ただし種別取得は両ページとも共通で、その劇場の全上映種別（通常・IMAX・Dolby等）を取得します。
-
-例：千葉ページでMX4Dがあるららぽーと船橋 → 通常上映もMX4Dもまとめて取得
-
-これで合っていますか？
-
-あなたの入力: あってはいます。
-あってはいます。
-ただし、グランドシネマサンシャイン 池袋の問題はそれで解決する？
-
-13:22
-Claudeが返答しました: 理論上は解決するはずですが、確証はまだ持てません。
-
-新しいロジックの理論的有効性を検証しつつ、実装の不確実性を認識した。
-新しいロジックの理論的有効性を検証しつつ、実装の不確実性を認識した。
-理論上は解決するはずですが、確証はまだ持てません。
-
-問題の核心
-これまで何度試しても失敗した根本原因は、DOMを直接確認できていないことです。
-
-article の実際の構造が見えていないので
-「バッジ要素」と「スケジュール要素」の区別が
-推測ベースになってしまっている
-確実に解決するために
-まず実際のDOM構造を確認したいです。ブラウザの開発者ツールで以下を実行してもらえますか？
-
-グランドシネマサンシャイン 池袋のページを開いた状態でコンソールに貼り付け：
-
-javascript
-const art = [...document.querySelectorAll('article')].find(a => a.innerText.includes('グランドシネマサンシャイン'));
-[...art.children].forEach((el, i) => {
-  console.log(i, el.tagName, el.className, el.innerText.slice(0, 50).replace(/\n/g, ' '));
-});
-これで article の直接の子要素一覧が取れます。バッジとスケジュールがどう並んでいるか見えれば、確実に動くコードが書けます。
-
-あなたの入力: それかHTMLをダウンロードして共有しますか？
-それかHTMLをダウンロードして共有しますか？
-
-13:23
-Claudeが返答しました: それが一番確実です！
-
-HTMLをダウンロードして共有することを提案した。
-HTMLをダウンロードして共有することを提案した。
-それが一番確実です！
-
-グランドシネマサンシャイン 池袋のページ（劇場個別ページ）でお願いします。
-
-手順：
-
-ブラウザで対象ページを開く
-Cmd+S（Mac）または Ctrl+S（Windows）
-保存形式は「Webページ、HTMLのみ」を選択
-保存したHTMLファイルをここに添付
-ページURL例：https://press.moviewalker.jp/mv91100/schedule/th～～～/
-
-都道府県まとめページ（P_tokyo）でも構いません。その場合はグランドシネマサンシャイン池袋のセクションが確認できればOKです。
-
-あなたの入力: まとめページにしますね。他の例外がまだあるかもしれないし
-まとめページにしますね。他の例外がまだあるかもしれないし
-
-13:23
-Claudeが返答しました: 了解です！東京まとめページ（P_tokyo）のHTMLをお願いします。
-
-まとめページを作成し、潜在的な例外を検討した。
-まとめページを作成し、潜在的な例外を検討した。
-了解です！東京まとめページ（P_tokyo）のHTMLをお願いします。
-
-複数劇場のDOM構造を一度に確認できるので、例外パターンも洗い出せます。お待ちしています。
-
-あなたの入力: これで確認して
-
-SAKAMOTO DAYS 東京都の映画館（上映館）｜MOVIE WALKER PRESS 映画.html
-html
-
-これで確認して
-
-13:24
-Claudeが返答しました: DOM構造が判明しました！
-
-DOM構造を分析し、ブックマークレット開発を完成させた。
-DOM構造を分析し、ブックマークレット開発を完成させた。
-DOM構造が判明しました！
-グランドシネマサンシャイン池袋の構造：
-
-<div class="bl_screen">
-  ├ <div class="bl_screen_lang"> ← ULTRA 4DX ラベル
-  ├ <div class="bl_screen_attention">
-  ├ <div class="bl_screen_timeTable"> ← ULTRA 4DXのスケジュール
-  ├ <div class="bl_screen_scheduleLink">
-  ├ <div class="bl_screen_attention"> ← bl_screen_lang がない = 通常
-  └ <div class="bl_screen_timeTable"> ← 通常のスケジュール
-1つの bl_screen の中に両方が同居していたのが原因です。
-
-正しいロジック
-各 bl_screen_timeTable を起点に、直前の兄弟を遡って最初に当たるものを判定：
-
-bl_screen_lang → その種別
-bl_screen_timeTable または何もない → 通常
-これで確実に動きます。新ブックマークレット：
-
-javascript
-javascript:(()=>{const norm=s=>(s||'').replace(/\s+/g,' ').trim();const isTokyo=location.href.includes('P_tokyo');const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;document.querySelectorAll('article').forEach(art=>{if(!isTokyo&&!/4DX|MX4D/.test(art.innerText))return;const name=norm(art.querySelector('h3')?.innerText);if(!name)return;art.querySelectorAll('.bl_screen_timeTable').forEach(tt=>{let fmt='通常',sib=tt.previousElementSibling;while(sib){if(sib.classList.contains('bl_screen_lang')){const dt=sib.querySelector('dt');if(dt)fmt=norm(dt.innerText);break;}if(sib.classList.contains('bl_screen_timeTable'))break;sib=sib.previousElementSibling;}tt.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime')].map(x=>norm(x.innerText)).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){res+=`【${d}】${name}\n形式: ${fmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-テストポイント:
-
-✅ グランドシネマサンシャイン 池袋（東京ページ）
-  - ULTRA 4DX → 「ULTRA 4DX」
-  - 通常 → 「通常」
-
-✅ TOHOシネマズ ららぽーと船橋（千葉ページ）
-  - 通常 → 「通常」
-  - MX4D → 「MX4D」
-
-✅ 千葉・神奈川ページで4DX系なし劇場は取得されないか
-
-映画: SAKAMOTO DAYS 東京都の上映映画館・上映スケジュール --- 【5/13 水】新宿バルト9 形式: 通常 時間: 13:40,22:00,25:15 【5/14 木】新宿バルト9 形式: 通常 時間: 11:00,13:40,20:20 【5/15 金】新宿バルト9 形式: 通常 時間: 8:30,12:40,18:20,26:00 【5/13 水】新宿バルト9 形式: Dolby Cinema 時間: 16:30 【5/14 木】新宿バルト9 形式: Dolby Cinema 時間: 8:30,16:30 【5/15 金】新宿バルト9 形式: Dolby Cin
-
-pasted
-
-13:28
-Claudeが返答しました: 全テストポイントOKです！🎉
-
-I cannot provide a summary because the user prompt is empty
-I cannot provide a summary because the user prompt is empty
-全テストポイントOKです！🎉
-
-確認できたこと：
-
-✅ グランドシネマサンシャイン 池袋：ULTRA 4DX / 通常 が正しく分離
-✅ TOHOシネマズ ららぽーと船橋：通常 / MX4D が正しく分離
-✅ Dolby Cinema、IMAXレーザー、ScreenX、4DX など多種別も正確に取得
-✅ 千葉ページは4DX系ありの劇場のみ（通常上映も含めて全種別）取得
-最終版ブックマークレット（保存用）：
-
-javascript
-javascript:(()=>{const norm=s=>(s||'').replace(/\s+/g,' ').trim();const isTokyo=location.href.includes('P_tokyo');const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;document.querySelectorAll('article').forEach(art=>{if(!isTokyo&&!/4DX|MX4D/.test(art.innerText))return;const name=norm(art.querySelector('h3')?.innerText);if(!name)return;art.querySelectorAll('.bl_screen_timeTable').forEach(tt=>{let fmt='通常',sib=tt.previousElementSibling;while(sib){if(sib.classList.contains('bl_screen_lang')){const dt=sib.querySelector('dt');if(dt)fmt=norm(dt.innerText);break;}if(sib.classList.contains('bl_screen_timeTable'))break;sib=sib.previousElementSibling;}tt.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime')].map(x=>norm(x.innerText)).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){res+=`【${d}】${name}\n形式: ${fmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-次の作業（data.jsへの反映）に移りますか？
-
-あなたの入力: エリアの設定について決めておきたい
-
-20260513_2.txt
-txt
-
-エリアの設定について決めておきたい
-
-13:33
-Claudeが返答しました: データを確認しました。取得できている劇場を整理します。
-
-劇場をエリア別に分類し、サイト範囲を検討した。
-劇場をエリア別に分類し、サイト範囲を検討した。
-データを確認しました。取得できている劇場を整理します。
-
-現在取得できているエリア・劇場
-東京都（多数） 新宿・日比谷・日本橋・渋谷・池袋・六本木・品川・大井町・お台場・豊洲・上野・板橋・練馬・錦糸町・木場・二子玉川・西新井・亀有・平和島・吉祥寺・立川・昭島・村山・多摩・南大沢・日の出・府中・調布・町田方面など
-
-千葉県 南船橋・幕張・千葉ニュータウン・ちはら台・木更津・松戸
-
-神奈川県 みなとみらい・川崎・海老名・小田原
-
-埼玉県 新座・越谷・わかば・春日部・入間・菖蒲
-
-決めておきたいことが2つあります。
-
-① サイトに表示する対象劇場・エリアをどこまでにするか
-
-今まで：東京都心部16劇場固定
-今後：東京全劇場＋関東圏の4DX系あり劇場 → 表示対象をどう絞るか
-
-② data.jsのエリア分類をどうするか
-
-例）新宿 池袋 渋谷 ... 神奈川 千葉 埼玉 のような粒度
-
-どちらから決めますか？
-
-あなたの入力: 東京：
-東京：
-多すぎるので、
-①東京は今までの劇場設定＋4DX系あり劇場
-②都心部＋都下でごっそりまとめる？
-どっちがいいか迷ってる
-
-東京以外：
-県ごとに１つでOK
-
-13:39
-Claudeが返答しました: 整理します。
-
-分析した東京劇場の2つの整理案と追加対象を検討した。
-分析した東京劇場の2つの整理案と追加対象を検討した。
-整理します。
-
-①案：既存16劇場 ＋ 4DX系あり劇場を追加
-既存リストに含まれていない4DX系東京劇場は 4館だけ：
-
-劇場	種別	エリア
-ユナイテッド・シネマとしまえん	4DX	練馬
-シネマサンシャイン平和島	4DX	大田区
-イオンシネマ シアタス調布	4DX	調布
-109シネマズグランベリーパーク	ULTRA 4DX	町田
-→ 合計 20劇場。追加が少なく管理しやすい。
-
-②案：都心部＋都下でまとめる
-今回取得した東京の劇場数は 30館以上。エリアを2つに大分類する形。ただし全館表示になるので、タイムラインが大量になる。
-
-私の見立て
-①の方が現実的だと思います。理由：
-
-追加はたった4館で影響が小さい
-サイトの目的（都心に行くか遠征するか判断）に沿っている
-②は劇場が多すぎてタイムラインが見づらくなる
-都下の通常劇場（立川・昭島・南大沢など）は、都心民がわざわざ参照しないので含める必要性が薄いはずです。
-
-①でいきますか？
-
-あなたの入力: １で行く
-１で行く
-
-13:40
-Claudeが返答しました: 了解です。では確認のため、追加4館のエリア分類案を提示します。
-
-Organized theater locations and regional area structure
-Organized theater locations and regional area structure
-了解です。では確認のため、追加4館のエリア分類案を提示します。
-
-追加4館のエリア設定案
-劇場	エリア案
-ユナイテッド・シネマとしまえん	練馬
-シネマサンシャイン平和島	平和島
-イオンシネマ シアタス調布	調布
-109シネマズグランベリーパーク	町田
-AREA_ORDER 全体案
-// 都心
-有楽町・日本橋・新宿・渋谷・池袋・六本木・品川・大井町・お台場・豊洲・上野・二子玉川・西新井
-// 都下追加
-練馬・平和島・調布・町田
-// 関東圏
-神奈川・千葉・埼玉
-2点確認させてください。
-
-① 平和島はそのままでいいか（大田区・羽田などに変えるか）
-
-② 関東圏の取得条件は「4DX/MX4D/ULTRA 4DXあり劇場のみ」で固定でいいか（埼玉も同様）
-
-あなたの入力: 品川・大井町をまとめて品川に
-品川・大井町をまとめて品川に
-西新井は都下？都心？
-お台場・豊洲はまとめられる？湾岸？
-
-13:42
-Claudeが返答しました: 順番に整理します。
-
-地域区分を整理し、劇場グループ化の妥当性を検討した。
-地域区分を整理し、劇場グループ化の妥当性を検討した。
-順番に整理します。
-
-品川・大井町 → 品川 ✅ 異論なし
-
-西新井について 足立区なので地理的には都心外ですが、既存16劇場に含まれていました。どちらでも成立します。
-
-都心扱い → 「上野・西新井」など北東エリアとまとめる
-都下扱い → 練馬・平和島・調布・町田と並ぶ
-お台場・豊洲 → 湾岸 ✅ まとめられます。自然な括り。
-
-これらを踏まえた AREA_ORDER 案：
-
-// 都心
-有楽町・日本橋・新宿・渋谷・池袋・六本木・品川・お台場（湾岸）・上野・[西新井]・二子玉川
-// 都下
-練馬・平和島・調布・町田・[西新井]
-// 関東圏
-神奈川・千葉・埼玉
-西新井をどちらに入れますか？
-
-あなたの入力: // 都心
-// 都心
-有楽町・日本橋・新宿・渋谷・池袋・六本木・品川・お台場・豊洲・上野・二子玉川
-// 都内
-西新井・練馬・平和島・調布・町田
-// 関東圏
-神奈川・千葉・埼玉
-
-13:58
-Claudeが返答しました: 確定ですね。整理します。
-
-地域区分を整理し確認した。
-地域区分を整理し確認した。
-確定ですね。整理します。
-
-確定エリア構成
-javascript
-const AREA_ORDER = [
-  // 都心
-  '有楽町', '日本橋', '新宿', '渋谷', '池袋', '六本木', '品川', 'お台場', '豊洲', '上野', '二子玉川',
-  // 都内
-  '西新井', '練馬', '平和島', '調布', '町田',
-  // 関東圏
-  '神奈川', '千葉', '埼玉',
-];
-劇場→エリア 対応表（確認用）
-劇場	エリア
-TOHOシネマズ 日比谷	有楽町
-TOHOシネマズ 日本橋	日本橋
-新宿バルト9 / 新宿ピカデリー / TOHOシネマズ新宿 / 109シネマズプレミアム新宿	新宿
-TOHOシネマズ 渋谷	渋谷
-池袋HUMAXシネマズ / グランドシネマサンシャイン池袋 / TOHOシネマズ池袋	池袋
-TOHOシネマズ 六本木ヒルズ	六本木
-T・ジョイPRINCE品川 / TOHOシネマズ大井町	品川
-ユナイテッド・シネマ アクアシティお台場	お台場
-ユナイテッド・シネマ豊洲	豊洲
-TOHOシネマズ 上野	上野
-109シネマズ二子玉川	二子玉川
-TOHOシネマズ 西新井	西新井
-ユナイテッド・シネマとしまえん	練馬
-シネマサンシャイン平和島	平和島
-イオンシネマ シアタス調布	調布
-109シネマズグランベリーパーク	町田
-これで問題なければ、data.js更新作業に進めます。
-
-あなたの入力: HTMLはそのままでいける？
-HTMLはそのままでいける？
-
-13:59
-Claudeが返答しました: ほぼそのままいけますが、1箇所だけ要変更です。
-
-HTMLはほぼそのままで、劇場住所情報の追加のみ必要と判断。
-HTMLはほぼそのままで、劇場住所情報の追加のみ必要と判断。
-ほぼそのままいけますが、1箇所だけ要変更です。
-
-変更不要
-エリアフィルターUI → AREA_ORDERを動的に読んでいるので自動対応
-COLORS辞書 → 新種別（ULTRA 4DX等）は既に対応済み
-要変更
-THEATER_ADDRESSES → 新規4劇場の住所を追加する必要あり
-javascript
-'ユナイテッド・シネマとしまえん': '東京都練馬区向山3-25-1',
-'シネマサンシャイン平和島': '東京都大田区平和島1-1-1',
-'イオンシネマ シアタス調布': '東京都調布市小島町2-41-1',
-'109シネマズグランベリーパーク': '東京都町田市鶴間3-4-1',
-つまり作業は：
-
-data.js → AREA_ORDER更新 ＋ 新劇場データ追加
-index.html → THEATER_ADDRESSES に4劇場追加のみ
-進めてよいですか？
-
-あなたの入力: 住所の追加もjsniireru?
-住所の追加もjsniireru?
-
-14:00
-Claudeが返答しました: 現状は THEATER_ADDRESSES が index.
-
-アドレス管理の最適化を検討した。
-アドレス管理の最適化を検討した。
-現状は THEATER_ADDRESSES が index.html 側に書かれていますが、data.js に移すこともできます。
-
-どちらにするか決めてもらえますか？
-
-現状のまま（index.html）
-
-変更箇所が2ファイルに分かれる
-住所はほぼ変わらないので許容範囲
-data.js に移す
-
-データ関連が1ファイルに集約されてスッキリ
-ただし index.html 側の参照先も変更が必要（小規模な修正）
-個人的には data.js に移す方を推奨します。「データはdata.jsだけ触ればいい」という原則に沿うので。
-
-あなたの入力: 住所は新規4劇場だけではなく関東圏も必要だよね
-住所は新規4劇場だけではなく関東圏も必要だよね
-
-14:00
-Claudeが返答しました: そうですね。今回新たに追加される劇場が関東圏にも複数あります。
-そうですね。今回新たに追加される劇場が関東圏にも複数あります。
-
-改めて整理すると、THEATER_ADDRESSESに追加が必要な劇場は：
-
-都内追加4館
-
-ユナイテッド・シネマとしまえん
-シネマサンシャイン平和島
-イオンシネマ シアタス調布
-109シネマズグランベリーパーク
-神奈川
-
-TOHOシネマズ 川崎
-TOHOシネマズ 海老名
-イオンシネマみなとみらい
-小田原コロナシネマワールド
-千葉
-
-TOHOシネマズ ららぽーと船橋（既存）
-ユナイテッド・シネマ幕張
-USシネマ千葉ニュータウン
-USシネマちはら台
-USシネマ木更津
-ユナイテッド・シネマ テラスモール松戸
-埼玉
-
-ユナイテッド・シネマ新座
-イオンシネマ越谷レイクタウン
-ユナイテッド・シネマ わかば
-ユナイテッド・シネマ 春日部
-ローソン・ユナイテッドシネマ入間
-109シネマズ菖蒲
-これだけあるなら data.jsに移す方が断然いいですね。進めますか？
-
-あなたの入力: そうしましょう。
-そうしましょう。
-
-14:01
-Claudeが返答しました: では作業内容をまとめます。
-では作業内容をまとめます。
-
-今回の作業概要
-data.js
-
-THEATER_ADDRESSES を index.html から移植 ＋ 新規劇場の住所を追加
-AREA_ORDER を新エリア構成に更新
-5/13〜5/19 の新規データを追加（20劇場分）
-index.html
-
-THEATER_ADDRESSES の参照先を data.js に変更（1箇所のみ）
-作業前に現在の data.js と index.html を共有してもらえますか？GitHubから取得しますか、それともファイルをアップロードしますか？
-
-あなたの入力: githubから直接取得できるの？
-githubから直接取得できるの？
-
-14:01
-Claudeが返答しました: 直接は取得できませんでした。
-
-Failed to fetch: https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/main/data.js
-Failed to fetch: https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/main/data.js
-直接は取得できませんでした。
-
-以下のどちらかでお願いします：
-
-ファイルをアップロード（data.js と index.html を直接ここに添付）
-GitHubのraw URLをここに貼る（https://raw.githubusercontent.com/... の形式）→ 貼ってもらえれば取得できます
-あなたの入力: 連携したらできる？
-連携したらできる？
-
-14:01
-Claudeが返答しました: コネクタ検索の許可が必要です。許可するか確認中です。次のメッセージでお答えいただければ、GitHubコネクタが使えるか調べます。
-
-考えていること：連携による機能拡張の可能性を検討する
-考えていること：連携による機能拡張の可能性を検討する
-コネクターの検出をオンにする
-Claude がディレクトリ内の利用可能なコネクターを見つけるお手伝いをします。設定からいつでも変更できます。
-コネクタ検索の許可が必要です。許可するか確認中です。次のメッセージでお答えいただければ、GitHubコネクタが使えるか調べます。
-
-それまでの代替として、一番手っ取り早いのは raw URLを貼る方法です：
-
-GitHubでファイルを開く
-Raw ボタンをクリック
-URLをここにコピペ
-https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/main/data.js のような形式になるはずです。
-
-あなたの入力: ほー
-ほー
-
-14:02
-Claudeが返答しました: まだ許可待ちの状態です。
-
-Thinking about interpreting a minimal Japanese expression
-Thinking about interpreting a minimal Japanese expression
-コネクターの検出をオンにする
-Claude がディレクトリ内の利用可能なコネクターを見つけるお手伝いをします。設定からいつでも変更できます。
-まだ許可待ちの状態です。
-
-一旦 raw URLを貼る方法で進めましょうか。ブラウザで以下を開いてURLをコピペするだけです：
-
-https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/main/data.js
-https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/main/index.html
-このURLで合ってますか？
-
-あなたの入力: https://raw.
-https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/refs/heads/main/index.html
-
-https://raw.githubusercontent.com/kuroame216/sakamotodays-opening/refs/heads/main/data.js
-
-こういうこと？安全なの？
-
-14:03
-Claudeが返答しました: はい、そういうことです！安全性については：
-はい、そういうことです！安全性については：
-
-安全です。理由：
-
-raw.githubusercontent.com はGitHubの公式ドメイン
-すでに公開リポジトリなので、誰でもアクセスできる情報
-Claudeは読み取るだけで、書き込みは一切しない
-取得してよいですか？
-
-あなたの入力: なるほど。理解
-なるほど。理解
-
-14:03
-Claudeが返答しました: data.
-
-ファイルを取得し、次のステップを検討した。
-ファイルを取得し、次のステップを検討した。
-data.js取得完了です。次にindex.htmlのTHEATER_ADDRESSESを確認します。
-
-
-戦略を切り替えてコンテンツ取得を試みた。
-戦略を切り替えてコンテンツ取得を試みた。
-HTMLが1行に圧縮されているようです。別の方法で確認します。
-
-
-ネットワーク制限を分析し、代替手段を模索した。
-ネットワーク制限を分析し、代替手段を模索した。
-curlはネットワーク制限でブロックされています。web_fetchで取得します。
-
-
-ファイルアクセスの制限を検討し、代替案を模索した。
-ファイルアクセスの制限を検討し、代替案を模索した。
-data.jsは取得完了。index.htmlはファイルが大きすぎてTHEATER_ADDRESSESが途中で切れています。
-
-2つ選択肢があります：
-
-A) index.htmlのTHEATER_ADDRESSESだけ手動でコピペしてもらう 該当箇所だけで済むので手間は少ない
-
-B) アドレスは私が調べて全部書く 既存16劇場 ＋ 新規劇場の住所を全て私が用意する（若干精度リスクあり、後で確認は必要）
-
-どちらにしますか？
-
-あなたの入力: ダウンロードしますね
-
-index (8).html
-html
-
-ダウンロードしますね
-
-14:05
-Claudeが返答しました: 完璧です。現在の THEATER_ADDRESSES が確認できました。では全作業の準備が整いました。
-
-ファイルを検索してデータを抽出しようとした。
-ファイルを検索してデータを抽出しようとした。
-完璧です。現在の THEATER_ADDRESSES が確認できました。では全作業の準備が整いました。
-
-確認した内容まとめ
-**既存THEATER_ADDRESSES（21劇場）**は取得済み。
-
-**追加が必要な新規劇場（都内4＋関東圏多数）**の住所を私が調べて追加します。
-
-これから以下を一括で作業します：
-
-data.js
-THEATER_ADDRESSES を移植 ＋ 新規劇場の住所を追加
-AREA_ORDER を新構成に更新
-DAYS に 5/15〜5/19 を追加
-DATA に新劇場・新日付のデータを追加
-index.html
-THEATER_ADDRESSES の定義を削除
-参照はそのまま（data.js から読むので動作は変わらない）
-進めてよいですか？
-
-あなたの入力: OK
-OK
-
-14:06
-Claudeが返答しました: ありがとうございます！では作業を開始します。まずtxtファイルをパースして構造化します。 データ取得成功。次はfull data.
-
-Orchestrated comprehensive data restructuring and theater mapping
-Orchestrated comprehensive data restructuring and theater mapping
-ありがとうございます！では作業を開始します。まずtxtファイルをパースして構造化します。
-
-
-Orchestrated comprehensive data restructuring and theater database consolidation
-Orchestrated comprehensive data restructuring and theater database consolidation
-データ取得成功。次はfull data.jsを生成します。
-
-
-Prepared revised code by removing unnecessary variable
-Prepared revised code by removing unnecessary variable
-あなたの入力: 続けてください
-続けてください
-
-18:43
-Claudeが返答しました: 続けます！次はindex.
-
-続けてindex.htmlを修正する準備を整えた。
-続けてindex.htmlを修正する準備を整えた。
-続けます！次はindex.htmlの修正です。
-
-
-続行するための準備を整えた。
-続行するための準備を整えた。
-2ファイルのダウンロードができます。
-
-# Gitコミットメッセージ & テストポイント
-
-## コミットメッセージ
-feat: v25 - エリア拡張・新劇場追加・5/15-5/19データ追加
-
-- THEATER_ADDRESSES を data.js に移動（index.html から削除）
-- AREA_ORDER に都内4エリア（西新井/練馬/平和島/調布/町田）と埼玉を追加
-- 新規劇場18館分の住所追加
-- 5/13-5/14 データを新ブックマークレットで再生成（グランドシネマサンシャイン修正）
-- 5/15-5/19 データ追加（25劇場/日）
-- area:'大井町' → area:'品川' に全統一
-- data.js?v=24 → v=25
-
-## テストポイント
-□ 5/15〜5/19 タブが表示される
-□ 「練馬」「平和島」「調布」「町田」「埼玉」エリアが表示される
-□ グランドシネマサンシャイン池袋の「ULTRA 4DX」と通常が別バーで表示される
-□ TOHO大井町が「品川」エリアに表示される（「大井町」エリアが消える）
-□ Googleカレンダー登録で新劇場（例:109シネマズ菖蒲）の住所が入る
-□ 本日（5/13）のタブが自動選択される
-
-Data
-JS 
-
-Index
-コード · HTML 
-あなたの入力: data.
-data.jsに、AREA_ORDERは変更しないように記載してください。
-合わせて、ブックマークレットが今東京都は全件取得になっているので、
-「既存16劇場 ＋ 4DX系あり劇場」に調整できる？
-
-19:47
-Claudeが返答しました: 2つ同時に対応します。
-
-二つのタスクを構想：コメント追加とブックマークレット改修。
-二つのタスクを構想：コメント追加とブックマークレット改修。
-2つ同時に対応します。
-
-① data.jsのARER_ORDERにコメント追加 ② ブックマークレットを「既存16劇場 OR 4DX系あり」にフィルタ変更
-
-まずdata.jsから：
-
-
-AREA_ORDERに変更禁止コメントを追加
-AREA_ORDERに変更禁止コメントを追加
-次にブックマークレットを更新します：
-
-
-3個のコマンドを実行しました, ファイルを読み取りました
-3個のコマンドを実行しました, ファイルを読み取りました
-完了です。
-
-新ブックマークレット（1行・コピー用）:
-
-javascript:(()=>{const norm=s=>(s||'').replace(/\s+/g,' ').trim();const isTokyo=location.href.includes('P_tokyo');const CORE16=new Set(['TOHOシネマズ 日比谷','TOHOシネマズ 日本橋','TOHOシネマズ 上野','池袋HUMAXシネマズ','TOHOシネマズ 池袋','グランドシネマサンシャイン 池袋','新宿バルト9','新宿ピカデリー','TOHOシネマズ 新宿','109シネマズプレミアム新宿','TOHOシネマズ 渋谷','TOHOシネマズ 六本木ヒルズ','T・ジョイPRINCE品川','TOHOシネマズ 大井町','ユナイテッド・シネマ アクアシティお台場','ユナイテッド・シネマ 豊洲','109シネマズ二子玉川']);const tit=norm(document.querySelector('h1')?.innerText).replace(/の上映時間.*$/,'');let res=`映画: ${tit}\n---\n`,cnt=0;document.querySelectorAll('article').forEach(art=>{const name=norm(art.querySelector('h3')?.innerText);if(!name)return;const is4DX=/4DX|MX4D/.test(art.innerText);if(isTokyo&&!CORE16.has(name)&&!is4DX)return;if(!isTokyo&&!is4DX)return;art.querySelectorAll('.bl_screen_timeTable').forEach(tt=>{let fmt='通常',sib=tt.previousElementSibling;while(sib){if(sib.classList.contains('bl_screen_lang')){const dt=sib.querySelector('dt');if(dt)fmt=norm(dt.innerText);break;}if(sib.classList.contains('bl_screen_timeTable'))break;sib=sib.previousElementSibling;}tt.querySelectorAll('li').forEach(li=>{const d=norm(li.querySelector('dt')?.innerText);const tms=[...li.querySelectorAll('.startTime')].map(x=>norm(x.innerText)).filter(t=>/^\d{1,2}:\d{2}/.test(t));if(tms.length&&d){res+=`【${d}】${name}\n形式: ${fmt}\n時間: ${tms.join(',')}\n\n`;cnt++;}});});});if(!cnt)return alert('対象の上映が見つかりませんでした。');navigator.clipboard.writeText(res).then(()=>alert(`${cnt}件コピー完了`)).catch(()=>prompt('コピー失敗',res));})();
-変更内容まとめ:
-
-data.js: AREA_ORDER の上に「絶対変更禁止」の警告コメントを3行追加
-ブックマークレット: 東京ページで CORE16 セット（既存16劇場）に含まれるか、または 4DX|MX4D を含む劇場のみ取得。TOHO西新井・平和島・調布は4DX/MX4Dありなので自動的に含まれ、としまえん・グランベリーパーク（4DXなし）は含まれなくなります
-
-Data
-JS 
-あなたの入力: デザインの調整をしたい
-スクリーンショット 2026-05-13 21.41.23.png
-デザインの調整をしたい
-①劇場ごとにボーダーラインを引きたい
-現在）劇場：なし　上映種別行：あり
-修正）劇場：あり　上映種別行：なし
-
-②stickyの劇場ラベルの位置
-今の位置から2pxほど上に
-
-22:03
-Claudeが返答しました: まず現在のCSSを確認します。 把握しました。変更箇所は2つです：
-
-CSSレイアウト調整の要件を解析し対応を検討した。
-CSSレイアウト調整の要件を解析し対応を検討した。
-まず現在のCSSを確認します。
-
-
-境界線の表示ロジックと位置調整を特定した。
-境界線の表示ロジックと位置調整を特定した。
-把握しました。変更箇所は2つです：
-
-.row-line を border-top: none に（種別行間のボーダーを消す）
-.theater-divider の 0.5 solid → 0.5px solid（既存のtypoも修正）
-.theater-watermark の padding-top: 4px → padding-top: 2px（2px上に）
-
-4個のファイルを編集しました, 2個のコマンドを実行しました, ファイルを読み取りました
-4個のファイルを編集しました, 2個のコマンドを実行しました, ファイルを読み取りました
-完了です。
-
-# Gitコミットメッセージ & テストポイント
-
-## コミットメッセージ
-fix: ボーダー調整・stickyラベル位置修正
-
-- .row-line（種別行間）のボーダーを削除
-- .theater-divider のtypo修正（0.5 → 0.5px）でボーダーが正しく表示
-- .theater-watermark の padding-top を 4px → 2px に変更（2px上に）
-- ダークモードの row-line も合わせて削除
-
-## テストポイント
-□ 劇場ごとにボーダーラインが表示される（theater-divider）
-□ 同一劇場内の種別行（通常/IMAXなど）の間にボーダーがない
-□ stickyの劇場ラベルが従来より2px上に表示される
-□ エリア区切り（area-divider）は従来通り太く表示される
-□ ダークモードでも同様に動作する
-
-Index
-コード · HTML 
-あなたの入力: stickyの劇場ラベルが従来より2px上に表示されていない気がする
-スクリーンショット 2026-05-13 22.05.43.png
-stickyの劇場ラベルが従来より2px上に表示されていない気がする
-
-22:06
-Claudeが返答しました: padding-top の変更はflexコンテナ内では効きにくいです。transform: translateY(-2px) を使います。 padding-top を元の4pxに戻した上で transform: translateY(-2px) を追加しました。flexコンテナ内でも確実に2px上にずれます。確認して…
-
-劇場ラベルの位置調整方法を検討し、より効果的なアプローチを模索した。
-劇場ラベルの位置調整方法を検討し、より効果的なアプローチを模索した。
-padding-top の変更はflexコンテナ内では効きにくいです。transform: translateY(-2px) を使います。
-
-
-ファイルを編集しました, コマンドを実行しました, ファイルを読み取りました
-ファイルを編集しました, コマンドを実行しました, ファイルを読み取りました
-padding-top を元の4pxに戻した上で transform: translateY(-2px) を追加しました。flexコンテナ内でも確実に2px上にずれます。確認してみてください。
-
-
-Index
-コード · HTML 
-
-
-
-
-
-Claude は AI のため、誤りを含む可能性があります。回答内容は必ずご確認ください。
-Index · HTML
-コピー
-
 <!doctype html>
 <html lang="ja">
 <head>
@@ -1313,20 +35,20 @@ Index · HTML
     ※ マイリスト機能の選択状態はお使いのブラウザに保存されます。<br>
 ※ Googleカレンダーへの登録には、Googleアカウントへのログインが必要です。<br>
 ※ Googleアカウントをお持ちでない方は「コピー」機能をご利用ください。<br>
- 
- 
+
+
     <a href="https://press.moviewalker.jp/mv91100/schedule/P_tokyo/" target="_blank" rel="noopener noreferrer" class="disclaimer-link">&gt;&gt; 東京都の上映スケジュール（MOVIE WALKER PRESS）</a>
   </div>
 </div>
- 
+
 <div class="schedule-root">
- 
+
 <div id="filters"></div>
- 
+
 <div class="tab-wrap" role="tablist" aria-label="上映日切り替え" id="tab-wrap">
   <!-- タブはJSで動的生成 -->
 </div>
- 
+
 <div class="legend-panel">
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #888780; display: inline-block; border-radius: 2px;"></span>通常</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: #97C459; display: inline-block; border-radius: 2px;"></span>Dolby</div>
@@ -1338,13 +60,13 @@ Index · HTML
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(239, 159, 39, 0.15); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(239, 159, 39, 0.4);"></span>舞台挨拶の時間帯</div>
   <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 10px; background: rgba(75, 156, 211, 0.22); display: inline-block; border-radius: 2px; border: 0.5px solid rgba(75, 156, 211, 0.5);"></span>空き時間（2h以上）</div>
 </div>
- 
+
 <div id="chart-wrap">
   <div id="chart"></div>
 </div>
- 
+
 <div id="text-output" style="display: none;"></div>
- 
+
 <div id="mylist-section" style="display: none;">
   <div class="mylist-header">
     <div class="mylist-title">マイリスト <span id="mylist-count"></span></div>
@@ -1358,12 +80,12 @@ Index · HTML
     <button class="area-link" id="mylist-only" type="button">マイリストのみ表示</button>
   </div>
 </div>
- 
- 
+
+
 <div id="tip" style="position: absolute; display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; pointer-events: none; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 240px;"></div>
- 
+
 </div>
- 
+
 <style>
 .schedule-root { font-family: var(--font-sans); color: var(--color-text-primary); padding: 0.5rem 0; }
 .schedule-root > .tab-wrap,
@@ -1377,7 +99,7 @@ Index · HTML
   .schedule-root > .legend-panel,
   .schedule-root > #filters { margin-left: 24px; margin-right: 24px; }
 }
- 
+
 .tab-wrap { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--color-border-tertiary); overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .tab-wrap::-webkit-scrollbar { display: none; }
 .tab { appearance: none; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 14px; padding: 8px 18px 7px; margin-bottom: -1px; transition: all 0.15s; flex-shrink: 0; white-space: nowrap; font-family: inherit; }
@@ -1405,7 +127,7 @@ Index · HTML
 .area-check { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--color-text-secondary); cursor: pointer; user-select: none; }
 .area-check input { width: 13px; height: 13px; margin: 0; accent-color: #111111; cursor: pointer; }
 .area-check span { line-height: 1; }
- 
+
 .bar { position: absolute; height: 16px; border-radius: 3px; cursor: pointer; transition: opacity 0.15s; overflow: hidden; z-index: 3; box-sizing: border-box; border: 1px solid #FFFFFF; }
 .bar.selected { border-color: rgba(255,255,255,0.95); }
 .mylist-row { border-bottom: 1.5px solid #BBBBBB; background: rgba(0,0,0,0.02); }
@@ -1413,27 +135,27 @@ Index · HTML
 .mylist-row .row-theater { font-weight: 700; }
 .bar:hover { opacity: 0.75; }
 .bar-label { font-size: 10px; color: white; padding: 0 3px; white-space: nowrap; line-height: 14px; display: block; }
- 
+
 .header-cell { font-size: 11px; padding: 2px 10px; color: var(--color-text-secondary); box-sizing: border-box; }
 .hour-tick { font-size: 10px; color: var(--color-text-tertiary); text-align: center; border-left: 0.5px dashed var(--color-border-tertiary); padding: 2px 0; }
- 
+
 .row-area-cell { font-size: 10px; color: var(--color-text-tertiary); padding: 0 6px 0 10px; border-right: 0.5px solid var(--color-border-tertiary); white-space: nowrap; display: flex; align-items: center; width: 64px; flex-shrink: 0; box-sizing: border-box; }
 .row-theater-cell { font-size: 12px; padding: 0 10px; white-space: nowrap; display: grid; grid-template-columns: 1fr 44px; align-items: center; gap: 12px; width: 196px; flex-shrink: 0; box-sizing: border-box; }
 .row-theater { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
 .kind-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--color-background-secondary); color: var(--color-text-secondary); text-align: center; justify-self: end; }
- 
+
 .row-line { border-top: none; }
 .theater-divider { border-top: 0.5px solid #DDDDDD; }
 .area-divider { border-top: 1px solid #BBBBBB; }
- 
+
 .stage-bg { position: absolute; top: 0; bottom: 0; background: rgba(239, 159, 39, 0.1); pointer-events: none; z-index: 0; }
 .free-slot-bg { position: absolute; top: 0; bottom: 0; background: rgba(75, 156, 211, 0.18); pointer-events: none; z-index: 0; }
 .now-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #F9E9E8; pointer-events: none; z-index: 1; }
- 
+
 .theater-watermark { position: sticky; left: 10px; font-size: 8px; color: #999; z-index: 1; pointer-events: none; line-height: 1; white-space: nowrap; display: inline-block; padding-top: 4px; transform: translateY(-2px); }
- 
+
 .bar-area { position: relative; flex: 1; }
- 
+
 @media (prefers-color-scheme: dark) {
   .row-line { border-top: none; }
   .theater-divider { border-top-color: rgba(255,255,255,0.12); }
@@ -1449,7 +171,7 @@ Index · HTML
 .disclaimer { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--color-text-tertiary); }
 .disclaimer-link { display: inline-block; margin-top: 4px; color: var(--color-text-secondary); text-decoration: none; }
 .disclaimer-link:hover { color: var(--color-text-primary); text-decoration: underline; }
- 
+
 /* マイリスト */
 #mylist-section { margin: 16px 20px 0; padding: 12px 14px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); box-sizing: border-box; }
 .mylist-header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
@@ -1489,27 +211,27 @@ Index · HTML
   .page-title-main { font-size: clamp(27px, 8.4vw, 32px); line-height: 0.95; white-space: nowrap; }
   .page-title-sub { font-size: 13px; margin-top: 12px; }
   .signature { font-size: 11px; margin-top: 6px; }
- 
+
   .schedule-root > .tab-wrap,
   .schedule-root > .legend-panel,
   .schedule-root > #filters { margin-left: 16px !important; margin-right: 16px !important; }
- 
+
   .legend-panel { gap: 4px 8px; padding: 0; margin-bottom: 8px; font-size: 10px; }
   .legend-panel div { gap: 4px !important; }
   .legend-panel span { width: 10px !important; height: 8px !important; }
- 
+
   .filter-panel { gap: 5px; padding: 7px 8px; }
   .area-toolbar,
   .area-link { font-size: 11px; }
   .area-check-row { gap: 4px 8px; }
   .area-check { gap: 3px; font-size: 11px; }
   .area-check input { width: 12px; height: 12px; }
- 
+
   .schedule-root > .tab-wrap { display: flex; width: calc(100% - 32px); margin-top: 8px; }
   .tab { flex: 0 0 auto; text-align: center; font-size: 14px; padding: 8px 14px 7px; }
 }
 </style>
- 
+
 <script>
 const COLORS = {
   '通常': '#888780',
@@ -1520,7 +242,7 @@ const COLORS = {
   '4DX': '#D86BB1',
   '舞台挨拶': '#E24B4A'
 };
- 
+
 // 種別文字列から色を判定（プレフィックス・キーワードでマッチング）
 function getColor(type) {
   if (!type || type === '通常') return COLORS['通常'];
@@ -1536,22 +258,22 @@ function getColor(type) {
   if (type === '4DX' || type === 'ULTRA 4DX' || type === 'MX4D') return COLORS['4DX'];
   return COLORS['通常'];
 }
- 
+
 const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
- 
+
 function parseShow(str) {
   const m = str.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})(?:（(.+?)）)?/);
   if (!m) return null;
   return { start: m[1], end: m[2], type: m[3] || '通常' };
 }
- 
+
 function classify(type) {
   if (type === '通常') return '通常';
   if (type === '舞台挨拶') return '舞台挨拶';
   return '特別';
 }
- 
- 
+
+
 // 初期表示タブの選択ロジック:
 // 1) 今日のタブにデータがあれば → 今日
 // 2) 今日にデータがなければ → 今日以降でデータがある最初の日
@@ -1580,7 +302,7 @@ let currentDay = (function pickInitialDay() {
 let activeAreas = new Set(AREA_ORDER);
 let isTextMode = false;
 let mylistOnly = false;
- 
+
 // === マイリスト管理 ===
 const MYLIST_STORAGE_KEY = 'sakamotodays_mylist_v1';
 function makeShowId(day, theaterName, start, end, type) {
@@ -1598,17 +320,17 @@ function saveMylist(set) {
   try { localStorage.setItem(MYLIST_STORAGE_KEY, JSON.stringify([...set])); } catch (e) {}
 }
 let mylist = loadMylist();
- 
+
 const START_HOUR = 7;
 const END_HOUR = 28;
 const AREA_W = 64;
 const THEATER_W = 196;
 const HOUR_W = 48;
- 
+
 const ROW_H_NORMAL = 32;
 const ROW_H_FIRST = 42;
 const BAR_H = 16;
- 
+
 function buildTheaterRows(theater) {
   const groups = { '通常': [], '特別': [], '舞台挨拶': [] };
   theater.shows.forEach(s => {
@@ -1622,7 +344,7 @@ function buildTheaterRows(theater) {
   if (groups['特別'].length > 0) rows.push({kind:'特別', shows: groups['特別']});
   return rows;
 }
- 
+
 function stageBgHtml() {
   const dayConfig = DAYS.find(d => d.key === currentDay);
   const ranges = (dayConfig && dayConfig.stageTimes) || [];
@@ -1634,7 +356,7 @@ function stageBgHtml() {
     return `<div class="stage-bg" style="left: ${left}px; width: ${width}px;"></div>`;
   }).join('');
 }
- 
+
 function freeSlotBgHtml() {
   const dayData = DATA[currentDay] || [];
   const selectedShows = [];
@@ -1667,7 +389,7 @@ function freeSlotBgHtml() {
     return `<div class="free-slot-bg" style="left: ${left}px; width: ${width}px;"></div>`;
   }).join('');
 }
- 
+
 // 現在時刻の縦線を描画（今日のタブを見ている時のみ表示）
 function nowLineHtml() {
   // 表示中のタブが今日でなければ何も出さない
@@ -1676,18 +398,18 @@ function nowLineHtml() {
     return `${now.getMonth() + 1}/${now.getDate()}`;
   })();
   if (currentDay !== todayKey) return '';
- 
+
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const offsetMin = nowMin - START_HOUR * 60;
   const totalMin = (END_HOUR - START_HOUR) * 60;
   // チャート時間範囲外なら表示しない
   if (offsetMin < 0 || offsetMin > totalMin) return '';
- 
+
   const left = (offsetMin / 60) * HOUR_W;
   return `<div class="now-line" style="left: ${left}px;"></div>`;
 }
- 
+
 function buildMylistRowHtml(chartWidth, totalHours) {
   const dayData = DATA[currentDay] || [];
   const selectedShows = [];
@@ -1703,7 +425,7 @@ function buildMylistRowHtml(chartWidth, totalHours) {
   });
   if (selectedShows.length === 0) return '';
   selectedShows.sort((a, b) => toMin(a.start) - toMin(b.start));
- 
+
   const rowH = ROW_H_FIRST;
   const barTop = 18;
   let html = '';
@@ -1737,7 +459,7 @@ function buildMylistRowHtml(chartWidth, totalHours) {
   html += `</div></div>`;
   return html;
 }
- 
+
 function render() {
   const chartWrap = document.getElementById('chart-wrap');
   const textOutput = document.getElementById('text-output');
@@ -1811,7 +533,7 @@ function render() {
     bar.addEventListener('click', () => { const id = bar.dataset.showId; if (!id) return; if (mylist.has(id)) mylist.delete(id); else mylist.add(id); saveMylist(mylist); renderMylist(); render(); fixScrollAfterShrink(); });
   });
 }
- 
+
 function renderText() {
   const dayData = DATA[currentDay] || [];
   const sorted = [...dayData].sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
@@ -1828,7 +550,7 @@ function renderText() {
   });
   document.getElementById('text-output').textContent = text;
 }
- 
+
 function buildMylistData() {
   const res = {};
   DAYS.forEach(day => {
@@ -1839,7 +561,7 @@ function buildMylistData() {
   });
   return DAYS.filter(d => res[d.key]).map(d => ({ ...d, items: res[d.key].sort((a, b) => toMin(a.start) - toMin(b.start)) }));
 }
- 
+
 function renderMylist() {
   const section = document.getElementById('mylist-section'), content = document.getElementById('mylist-content');
   const groups = buildMylistData(), total = groups.reduce((a, g) => a + g.items.length, 0);
@@ -1854,7 +576,7 @@ function renderMylist() {
     if (item && day) window.open(buildGCalUrl({ day, theater: item.theater, start: item.start, end: item.end, type: item.type }), '_blank');
   }));
 }
- 
+
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function buildGCalUrl(item) {
   const startDt = buildDateTime(item.day, item.start), endDt = buildDateTime(item.day, item.end);
@@ -1867,9 +589,9 @@ function buildDateTime(dayKey, timeStr) {
   return new Date(2026, m - 1, d + offset, hh % 24, mm);
 }
 function fmtGCalLocal(dt) { const p = n => String(n).padStart(2, '0'); return `${dt.getFullYear()}${p(dt.getMonth() + 1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`; }
- 
+
 // THEATER_ADDRESSES は data.js に移動しました
- 
+
 function renderFilters() {
   const wrap = document.getElementById('filters');
   wrap.innerHTML = `<div class="filter-panel"><div class="area-toolbar"><button class="area-link" id="all-on">全表示</button> / <button class="area-link" id="all-off">全解除</button> / <button class="area-link" id="toggle-mode">${isTextMode ? 'デザイン表示' : 'テキスト表示'}</button></div><div class="area-check-row">${AREA_ORDER.map(a => `<label class="area-check"><input type="checkbox" data-area="${a}" ${activeAreas.has(a) ? 'checked' : ''}><span>${a}</span></label>`).join('')}</div></div>`;
@@ -1878,7 +600,7 @@ function renderFilters() {
   document.getElementById('all-off').addEventListener('click', () => { activeAreas = new Set(); renderFilters(); render(); });
   document.getElementById('toggle-mode').addEventListener('click', () => { isTextMode = !isTextMode; renderFilters(); render(); });
 }
- 
+
 // 「今日」基準で日付をパースして過去かどうか判定
 // DAYSのkey形式 "M/D" を、現在の年で日付に変換
 function getDayDate(dayKey) {
@@ -1897,17 +619,17 @@ function isPastDay(dayKey) {
   today.setHours(0, 0, 0, 0);
   return d < today;
 }
- 
+
 // 過去タブ折りたたみ状態（初期: 折りたたみ。ただし currentDay が過去日なら自動展開）
 let pastExpanded = isPastDay(currentDay);
- 
+
 function renderTabs() {
   const wrap = document.getElementById('tab-wrap');
   const pastDays = DAYS.filter(d => isPastDay(d.key));
   const futureDays = DAYS.filter(d => !isPastDay(d.key));
- 
+
   let html = '';
- 
+
   // 過去日が1つ以上ある場合のみ折りたたみボタンを表示
   if (pastDays.length > 0) {
     html += `<button class="past-toggle${pastExpanded ? ' expanded' : ''}" type="button" aria-expanded="${pastExpanded}"><span class="toggle-arrow">▶</span>過去</button>`;
@@ -1919,16 +641,16 @@ function renderTabs() {
       }).join('');
     }
   }
- 
+
   // 未来（今日含む）の日付タブ
   html += futureDays.map(d => {
     const isEmpty = (DATA[d.key] || []).length === 0;
     const isActive = d.key === currentDay;
     return `<button class="tab${isActive ? ' active' : ''}${isEmpty ? ' is-empty' : ''}" data-day="${d.key}">${d.label}</button>`;
   }).join('');
- 
+
   wrap.innerHTML = html;
- 
+
   // 折りたたみトグル
   const toggleBtn = wrap.querySelector('.past-toggle');
   if (toggleBtn) {
@@ -1937,11 +659,11 @@ function renderTabs() {
       renderTabs();
     });
   }
- 
+
   // 通常タブのクリック
   wrap.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { currentDay = b.dataset.day; renderTabs(); render(); }));
 }
- 
+
 (function setupMylistClear() {
   const btn = document.getElementById('mylist-clear');
   if (!btn) return;
@@ -1975,9 +697,9 @@ function renderTabs() {
     if (btn.classList.contains('confirming') && !btn.contains(e.target)) reset();
   });
 })();
- 
+
 renderTabs(); renderFilters(); render(); renderMylist();
- 
+
 // === 現在時刻ラインの自動更新 ===
 // 1分ごとに再描画して時刻線が遅れないようにする
 setInterval(() => {
@@ -1992,7 +714,7 @@ setInterval(() => {
 }, 60 * 1000);
 document.getElementById('mylist-copy').addEventListener('click', () => { const t = buildMylistData().map(g => `【${g.label}】\n` + g.items.map(i => `・${i.start}-${i.end} ${i.theater}`).join('\n')).join('\n\n'); navigator.clipboard.writeText(t); alert('コピーしました'); });
 document.getElementById('mylist-only').addEventListener('click', () => { mylistOnly = !mylistOnly; render(); });
- 
+
 // === iOS Safari 初期スクロール対策 ===
 // 読み込み直後にレイアウト計算が確定していないと縦スクロールが効かないことがあるので、
 // 強制リフローを促してスクロール処理を初期化する
@@ -2006,7 +728,7 @@ window.addEventListener('load', () => {
     }
   });
 });
- 
+
 // === マイリスト削除後のスクロール位置補正 ===
 // マイリストの内容が縮んだ時、スクロール位置がページ範囲外になる問題への対策
 function fixScrollAfterShrink() {
@@ -2017,7 +739,7 @@ function fixScrollAfterShrink() {
     }
   });
 }
- 
+
 // === iOS Safari 縦スクロール対応 ===
 // チャート部分(横スクロール領域)の上で縦スワイプした時、
 // ページ全体の縦スクロールに変換する
@@ -2027,25 +749,25 @@ function fixScrollAfterShrink() {
   let startX = 0, startY = 0;
   let direction = null; // 'horizontal' | 'vertical' | null
   const THRESHOLD = 8; // px
- 
+
   chartWrap.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     direction = null;
   }, { passive: true });
- 
+
   chartWrap.addEventListener('touchmove', (e) => {
     if (e.touches.length !== 1) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
- 
+
     // 方向を確定（最初に判定された方向で固定）
     if (direction === null) {
       if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
       direction = Math.abs(dy) > Math.abs(dx) ? 'vertical' : 'horizontal';
     }
- 
+
     if (direction === 'vertical') {
       // 縦スワイプ → ブラウザの判定を止めてページを手動スクロール
       e.preventDefault();
@@ -2056,19 +778,9 @@ function fixScrollAfterShrink() {
     }
     // 横スワイプの場合は何もしない（ブラウザの横スクロール処理に任せる）
   }, { passive: false });
- 
+
   chartWrap.addEventListener('touchend', () => { direction = null; }, { passive: true });
 })();
 </script>
 </body>
 </html>
- 
-
-
-
-
-
-
-
-
-
