@@ -712,7 +712,7 @@ setInterval(() => {
     render();
   }
 }, 60 * 1000);
-document.getElementById('mylist-copy').addEventListener('click', () => { const t = buildMylistData().map(g => `【${g.label}】\n` + g.items.map(i => `・${i.start}-${i.end} ${i.theater}`).join('\n')).join('\n\n'); navigator.clipboard.writeText(t); alert('コピーしました'); });
+document.getElementById('mylist-copy').addEventListener('click', () => { const t = buildMylistData().map(g => `【${g.label}】\n` + g.items.map(i => `・${i.start}-${i.end} ${i.theater}${i.type && i.type !== '通常' ? `（${i.type}）` : ''}`).join('\n')).join('\n\n'); navigator.clipboard.writeText(t); alert('コピーしました'); });
 document.getElementById('mylist-only').addEventListener('click', () => { mylistOnly = !mylistOnly; render(); });
 
 // === iOS Safari 初期スクロール対策 ===
